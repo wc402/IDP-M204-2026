@@ -1,34 +1,20 @@
 from machine import Pin
 from utime import sleep
 
-def test_input_poll():
-    "Simple poll of input"
-    input_pin = 18  # Pin 18 = GP18 (labelled 24 on the jumper)
-    input = Pin(input_pin, Pin.IN, Pin.PULL_DOWN) # Think carefully whether you need pull up or pull down
-
+def test_line_sensors_poll():
+    "Simple poll of all four line sensors"
+    # Red → 3V3 (header pin 36), Black → GND (pin 38), Green → the pin below
+    # 1 over white, 0 over black
+    far_left  = Pin(18, Pin.IN, Pin.PULL_DOWN)   # GP18 = header pin 24
+    left      = Pin(19, Pin.IN, Pin.PULL_DOWN)   # GP19 = header pin 25
+    right     = Pin(20, Pin.IN, Pin.PULL_DOWN)   # GP20 = header pin 26
+    far_right = Pin(22, Pin.IN, Pin.PULL_DOWN)   # GP22 = header pin 29
+    
     while True:
-        # Poll the value
-        value = input.value()
-        print(f"Input = {value}")
-        sleep(0.2)
-
-
-def input_irq(p):
-    "Interrupt handler"
-    # print(p)
-    value = p.value()
-    print(f"Input changed, value={value}")
-
-
-def test_input_irq():
-    "More advanced, interrupt based input handling"
-    left  = Pin(18, Pin.IN, Pin.PULL_DOWN)   # header pin 24
-    right = Pin(19, Pin.IN, Pin.PULL_DOWN)   # header pin 25
-    while True:
-        print(f"L={left.value()}  R={right.value()}")
+        # Poll the values
+        print(f"FL = {far_left.value()}  L = {left.value()}  R = {right.value()}  FR = {far_right.value()}")
         sleep(0.2)
 
 
 if __name__ == "__main__":
-    test_input_poll()
-    # test_input_irq()
+    test_line_sensors_poll()
