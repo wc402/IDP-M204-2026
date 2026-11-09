@@ -51,6 +51,7 @@ if __name__ == "__main__":
     finally:
         motorL.off(); motorR.off()
         # cool
+        # gimmick
     
 
     
