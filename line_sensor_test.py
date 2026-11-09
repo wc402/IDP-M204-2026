@@ -13,7 +13,7 @@ def test_input_poll():
         sleep(0.2)
 
 
-def input_irq(p):	
+def input_irq(p):
     "Interrupt handler"
     # print(p)
     value = p.value()
