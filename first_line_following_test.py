@@ -26,7 +26,9 @@ if __name__ == "__main__":
     motorL = Motor(dirPin=7, PWMPin=6)   # left wheel (dir/pwm swapped on this channel)
     left   = Pin(19, Pin.IN, Pin.PULL_DOWN)   # GP19 = header pin 25
     right  = Pin(18, Pin.IN, Pin.PULL_DOWN)   # GP18 = header pin 24
-    button = Pin(12, Pin.IN, Pin.PULL_DOWN)
+    button = Pin(28, Pin.IN, Pin.PULL_DOWN)
+    
+    
     
     for i in range(10):
         if left.value()&right.value():
@@ -43,9 +45,9 @@ if __name__ == "__main__":
             motorL.Forward(50)
         sleep(1)
      
-    
-    motorR.off()
-    motorL.off()
+    if button.value():
+        motorR.off()
+        motorL.off()
         
         
 
