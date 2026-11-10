@@ -1,4 +1,4 @@
-from machine import Pin
+from machine import Pin, PWM
 from utime import sleep
 
 class Motor:
@@ -21,26 +21,31 @@ class Motor:
         self.pwm.duty_u16(int(65535 * speed / 100))
 
 
-if name == "__main__":
+if __name__ == "__main__":
     motorR = Motor(dirPin=4, PWMPin=5)   # right wheel
     motorL = Motor(dirPin=7, PWMPin=6)   # left wheel (dir/pwm swapped on this channel)
-    left      = Pin(19, Pin.IN, Pin.PULL_DOWN)   # GP19 = header pin 25
-    right     = Pin(20, Pin.IN, Pin.PULL_DOWN)   # GP20 = header pin 26
+    left   = Pin(19, Pin.IN, Pin.PULL_DOWN)   # GP19 = header pin 25
+    right  = Pin(18, Pin.IN, Pin.PULL_DOWN)   # GP18 = header pin 24
+    button = Pin(12, Pin.IN, Pin.PULL_DOWN)
     
     for i in range(10):
-        if left:
-            motorL.Forward(30)
-            motorR.Forward(60)
-        elif right:
-            motorR.Forward(60)
-            motorL.Forward(30)
-        elif left&right:
+        if left.value()&right.value():
             motorR.Reverse(30)
             motorL.Reverse(30)
+        elif left.value():
+            motorL.Forward(30)
+            motorR.Forward(60)
+        elif right.value():
+            motorR.Forward(60)
+            motorL.Forward(30)
         else:
             motorR.Forward(50)
             motorL.Forward(50)
         sleep(1)
+     
+    
+    motorR.off()
+    motorL.off()
         
         
 
