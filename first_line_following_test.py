@@ -30,7 +30,7 @@ if __name__ == "__main__":
     
     
     
-    for i in range(10):
+    while True:
         if left.value()&right.value():
             motorR.Reverse(30)
             motorL.Reverse(30)
@@ -38,16 +38,18 @@ if __name__ == "__main__":
             motorL.Forward(30)
             motorR.Forward(60)
         elif right.value():
-            motorR.Forward(60)
-            motorL.Forward(30)
+            motorR.Forward(30)
+            motorL.Forward(60)
         else:
             motorR.Forward(50)
             motorL.Forward(50)
-        sleep(1)
+        
+        if button.value()==0:
+            break
      
-    if button.value():
-        motorR.off()
-        motorL.off()
+    
+    motorR.off()
+    motorL.off()
         
         
 
