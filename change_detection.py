@@ -1,27 +1,8 @@
 from machine import Pin, PWM
 from utime import sleep
 from collections import Counter
+from motor_test import Motor
 
-
-class Motor:
-    def __init__(self, dirPin, PWMPin):
-        self.mDir = Pin(dirPin, Pin.OUT)
-        self.pwm = PWM(Pin(PWMPin))
-        self.pwm.freq(1000)
-        self.off()
-
-    def off(self):
-        self.pwm.duty_u16(0)
-        self.mDir.value(0)
-
-    def Forward(self, speed=100):
-        self.mDir.value(0)                 # 0 = forward on both channels
-        self.pwm.duty_u16(int(65535 * speed / 100))
-
-    def Reverse(self, speed=30):
-        self.mDir.value(1)
-        self.pwm.duty_u16(int(65535 * speed / 100))
-        
 #connect pins to sensors/motors
 far_left  = Pin(18, Pin.IN, Pin.PULL_DOWN)   # GP18 = header pin 24
 left      = Pin(19, Pin.IN, Pin.PULL_DOWN)   # GP19 = header pin 25
@@ -31,9 +12,8 @@ far_right = Pin(22, Pin.IN, Pin.PULL_DOWN)   # GP22 = header pin 29
 motorR = Motor(dirPin=4, PWMPin=5)   # right wheel
 motorL = Motor(dirPin=7, PWMPin=6)   # left wheel (dir/pwm swapped on this channel)
 button = Pin(28, Pin.IN, Pin.PULL_DOWN)
-    
 
-#start loop
+
 def is_change_detected():
     while True:
         no_checks = 5 #how many verification checks before commit to a move
