@@ -1,5 +1,5 @@
-from change_detection
-from direction_control
+import change_detection
+import direction_control
 from utime import sleep
 
 
@@ -33,5 +33,8 @@ def follow_route(route):
                 sleep(10)
                 proceed = 1
             x+=1
+        elif change == False:
+            direction_control.straight(lineSensML, lineSensMR)
+        sleep(0.05)
             
         
