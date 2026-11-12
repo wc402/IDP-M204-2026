@@ -11,7 +11,7 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
     while x != length: #iterate through each change in route
         change = change_detection.is_change_detected(lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL) #check if change detected (T/F)
         if change == False and proceed == 1: #proceed to reverse after pickup/drop off
-            change == True
+            change = True
         #Note: should never be the case that change == True and proceed = 1
         if change == True:
             i = route[x]
@@ -32,7 +32,7 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 proceed = 1
                 print("Picking up")
             elif i == 4: #backup
-                direction_control.reverse()
+                direction_control.reverse(motorR, motorL, BASESPEED)
                 proceed = 0
                 print("Reversing")
             elif i == 5: #pause to drop then proceed
@@ -42,6 +42,8 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
             x+=1
         elif change == False:
             direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+    motorR.off()
+    motorL.off()
         #sleep(0.05)
             
         
