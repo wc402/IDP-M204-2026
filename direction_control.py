@@ -41,18 +41,20 @@ def turn90(direction, TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR
         if ticks_diff(ticks_ms(), t0)>TIMEOUT:
             motorL.off()
             break
-        lineSensML, lineSensMR= getLineSens(False)
+        #lineSensML, lineSensMR= getLineSens(False)
     while not(lineSensML.value()==1 and lineSensMR.value()==1):
         if ticks_diff(ticks_ms(), t0)>TIMEOUT:
             motorR.off()
             break
-        lineSensML, lineSensMR= getLineSens(False)
+        #lineSensML, lineSensMR= getLineSens(False)
     return 0,0
-def reverse(motorR, motorL, BASESPEED):
+def reverse(motorR, motorL, BASESPEED, lineSensFL, lineSensFR):
     motorR.Reverse(BASESPEED)
     motorL.Reverse(BASESPEED)
     sleep(1) # Allow robot to reverse off junction
-    lineSensFL, lineSensML, lineSensMR, lineSensFR = getLineSens(True)
-    while (lineSensFL.value()==0 or lineSensFR.value()==0):
-        lineSensFL, lineSensML, lineSensMR, lineSensFR = getLineSens(True)
+    #lineSensFL, lineSensML, lineSensMR, lineSensFR = getLineSens(True)
+    while (lineSensFL.value()==0 and lineSensFR.value()==0):
+        #lineSensFL, lineSensML, lineSensMR, lineSensFR = getLineSens(True)
         pass
+    motorR.off()
+    motorL.off()
