@@ -1,6 +1,5 @@
-from runLineFollowingTest import lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL
-
-def is_change_detected():
+from time import sleep
+def is_change_detected(lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL):
     while True:
         no_checks = 5 #how many verification checks before commit to a move
         FL = lineSensFL.value()
@@ -11,7 +10,7 @@ def is_change_detected():
         count = 0
         
         #verify that a change is happening
-        while count != check:
+        while count != no_checks:
             if (FL or FR): #change detected, outside sensor on
                 majority += 1
                 #pause to verify change
@@ -20,8 +19,10 @@ def is_change_detected():
             count+=1
             
         if majority>2:
+            sleep(1)
             return True #change detected
         else:
+            sleep(1)
             return False #line following protocol
   
   
