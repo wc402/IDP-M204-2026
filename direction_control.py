@@ -1,5 +1,6 @@
 from time import ticks_ms, ticks_diff, sleep
 from machine import Pin
+from motor_test import Motor
 
 def getLineSens(getOuter):
     lineSensFL=Pin(28, Pin.IN, Pin.PULL_DOWN)
