@@ -1,28 +1,18 @@
-from runLineFollowingTest import lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL
+from utime import sleep_ms
+from direction_control import getLineSens
 
-def is_change_detected():
-    while True:
-        no_checks = 5 #how many verification checks before commit to a move
-        FL = lineSensFL.value()
-        L = lineSensML.value()
-        R = lineSensMR.value()
-        FR = lineSensFR.value()
-        majority = 0
-        count = 0
+def is_change_detected(lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL):
+    no_checks = 5 #how many verification checks before commit to a move
+    majority = 0
+    #verify that a change is happening
+    for i in range(no_checks):
+        lineSensFL, lineSensML, lineSensMR, lineSensFR = getLineSens("True")
+        if (lineSensFL.value()==1 or lineSensFR.value()==1): #change detected, outside sensor on
+            majority += 1
+            #pause to verify change
+        sleep_ms(5)
         
-        #verify that a change is happening
-        while count != check:
-            if (FL or FR): #change detected, outside sensor on
-                majority += 1
-                #pause to verify change
-                motorR.off()
-                motorL.off()
-            count+=1
-            
-        if majority>2:
-            return True #change detected
-        else:
-            return False #line following protocol
+    return majority > 2
   
   
   
