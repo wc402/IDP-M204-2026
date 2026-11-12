@@ -7,7 +7,7 @@ def is_change_detected(lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, m
     count = 0
     #verify that a change is happening
     while count != no_checks:
-        lineSensFL, lineSensML, lineSensMR, lineSensFR = getLineSens("True")
+        #lineSensFL, lineSensML, lineSensMR, lineSensFR = getLineSens("True")
         if (lineSensFL.value()==1 or lineSensFR.value()==1): #change detected, outside sensor on
             majority += 1
             #pause to verify change
