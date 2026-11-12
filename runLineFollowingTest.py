@@ -12,15 +12,15 @@ steer=0 #current steering amount
 lastError =0 #error value to use if line lost
 TIMEOUT=5000 # turn time limit (milliseconds)
 # Get sensor readings
-lineSensFL=Pin(24, Pin.IN, Pin.PULL_DOWN)
-lineSensML=Pin(25, Pin.IN, Pin.PULL_DOWN) #Change these pins to suit the actual wiring
-lineSensMR=Pin(26, Pin.IN, Pin.PULL_DOWN)
-lineSensFR=Pin(22, Pin.IN, Pin.PULL_DOWN)
+lineSensFL=Pin(34, Pin.IN, Pin.PULL_DOWN)
+lineSensML=Pin(32, Pin.IN, Pin.PULL_DOWN) #Change these pins to suit the actual wiring
+lineSensMR=Pin(31, Pin.IN, Pin.PULL_DOWN)
+lineSensFR=Pin(29, Pin.IN, Pin.PULL_DOWN)
 ## Connect to motors
 motorR=Motor(dirPin=4, PWMPin=5)
 motorL=Motor(dirPin=7, PWMPin=6)
 ## Route for line following test
-toBay=[1,0,2,0,0,0,2,3,4,2,0,0,1,0,5,4,2,1,0]
+toBay=[1,0,2,0,0,0,2,3,4,2,0,0,1,5,4,2,1,0]
 follow_route(toBay)
 
 
