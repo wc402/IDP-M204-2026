@@ -15,7 +15,7 @@ def straight(lineSensML, lineSensMR):
     mortorL.Forward(BASESPEED-steer)
     
 def turn90(direction, TIMEOUT):
-    if direction==Left:
+    if direction=="Left":
         motorR.Forward(BASESPEED)
         motorL.Reverse(BASESPEED)
     else:
@@ -32,5 +32,7 @@ def turn90(direction, TIMEOUT):
         if ticks_diff(ticks_ms(), t0)>TIMEOUT:
             break
         lineSensML, lineSensMR= getLineSens()    
-    
+def reverse():
+    motorR.Reverse(BASESPEED)
+    motorL.Reverse(BASESPEED)
     
