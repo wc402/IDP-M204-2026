@@ -1,4 +1,4 @@
-from machine import PIN
+from machine import Pin
 from time import ticks_ms, ticks_diff
 from motor_test import Motor
 from direction_control import straight
