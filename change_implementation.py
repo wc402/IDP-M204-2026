@@ -26,7 +26,15 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
             act=False
             
             if route[x] ==0: #straight ahead
+<<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+                steer, lastError = direction_control.straight(lineSensML, lineSensMR, lineSensFR, lineSensFL, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+=======
                 steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+>>>>>>> d45036a0af07dc5b4e4dbb54314ec9633cb1cfd9
+                steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+>>>>>>> Stashed changes
                 proceed = 0
                 print("Going straight")
             elif route[x]==1: #turn left
