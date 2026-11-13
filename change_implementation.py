@@ -26,7 +26,7 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
             act=False
             
             if route[x] ==0: #straight ahead
-                steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+                steer, lastError = direction_control.straight(lineSensML, lineSensMR, lineSensFR, lineSensFL, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
                 proceed = 0
                 print("Going straight")
             elif route[x]==1: #turn left
@@ -52,7 +52,7 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 print("Dropping")
             x+=1
         else: #no change detected, line following protocol
-            steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+            steer, lastError = direction_control.straight(lineSensML, lineSensMR, lineSensFR, lineSensFL, lineSens MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
     motorR.off()
     motorL.off()
     #sleep(0.05)
