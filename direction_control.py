@@ -16,9 +16,9 @@ def straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer,
     error= lineSensML.value()-lineSensMR.value()
     if error !=0: #Robot off centre but still detecting line (only one sensor on). Correction grows with each step
         lastError=error
-        steer+=error*STEP
+        steer-=error*STEP
     elif lineSensML.value()==0 and lineSensMR.value()==0: #Line lost (both sensors off)
-        steer+=lastError*STEP #Keep turning the same direction as when a line last detected
+        steer+=lastError*STEP #Keep turn in the opposite direction as when a line last detected
     else: #Following line correctly, do nothing
         steer = 0 
     steer=max(-MAXSTEER, min(MAXSTEER, steer))
@@ -65,3 +65,4 @@ def reverse(motorR, motorL, BASESPEED, lineSensFL, lineSensFR):
         pass
     motorR.off()
     motorL.off()
+

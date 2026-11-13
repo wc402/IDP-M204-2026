@@ -25,32 +25,31 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
         if change:
             act=False
             
-            match route[x]:
-                case 0: #straight ahead
-                    steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
-                    proceed = 0
-                    print("Going straight")
-                case 1: #turn left
-                    steer, lastError = direction_control.turn90("Left", TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
-                    proceed = 0
-                    print("Turning left")
-                case 2: #turn right
-                    steer, lastError = direction_control.turn90("Right", TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
-                    proceed = 0
-                    print("Turning right")
-                case 3: #pause to pick up then proceed
-                    sleep(10)
-                    proceed = 1
-                    print("Picking up")
-                case 4: #backup
-                    direction_control.reverse(motorR, motorL, BASESPEED, lineSensFL, lineSensFR)
-                    proceed = 0
-                    act=True
-                    print("Reversing")
-                case 5: #pause to drop then proceed
-                    sleep(10)
-                    proceed = 1
-                    print("Dropping")
+            if route[x] ==0: #straight ahead
+                steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+                proceed = 0
+                print("Going straight")
+            elif route[x]==1: #turn left
+                steer, lastError = direction_control.turn90("Left", TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
+                proceed = 0
+                print("Turning left")
+            elif route[x]==2: #turn right
+                steer, lastError = direction_control.turn90("Right", TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
+                proceed = 0
+                print("Turning right")
+            elif route[x]== 3: #pause to pick up then proceed
+                sleep(10)
+                proceed = 1
+                print("Picking up")
+            elif route[x]== 4: #backup
+                direction_control.reverse(motorR, motorL, BASESPEED, lineSensFL, lineSensFR)
+                proceed = 0
+                act=True
+                print("Reversing")
+            elif route[x]== 5: #pause to drop then proceed
+                sleep(10)
+                proceed = 1
+                print("Dropping")
             x+=1
         else: #no change detected, line following protocol
             steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
@@ -59,4 +58,5 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
     #sleep(0.05)
             
         
+
 
