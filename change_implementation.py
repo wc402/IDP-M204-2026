@@ -26,9 +26,12 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
             act=False
             
             if route[x] ==0: #straight ahead
+<<<<<<< Updated upstream
                 steer, lastError = direction_control.straight(lineSensML, lineSensMR, lineSensFR, lineSensFL, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+=======
                 steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
                 steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+>>>>>>> Stashed changes
                 proceed = 0
                 print("Going straight")
             elif route[x]==1: #turn left
@@ -53,29 +56,24 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 print("Turning right")
             elif route[x]== 3: #pause to pick up then proceed
                 t0=ticks_ms()
-                while (ticks_ms()-t0)<1000:
+                while (ticks_ms()-t0)<5000:
                     motorR.off()
                     motorL.off()
                 proceed = 1
                 print("Picking up")
             elif route[x]== 4: #backup
-                steer, lastError = direction_control.reverse(motorR, motorL, BASESPEED, lineSensFL, lineSensFR, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
-                sleep(1)
+                #direction_control.reverse(motorR, motorL, BASESPEED, lineSensFL, lineSensFR)
+                steer, lastError = direction_control.straight_reverse(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
                 proceed = 0
                 act=True
                 print("Reversing")
             elif route[x]== 5: #pause to drop then proceed
                 t0=ticks_ms()
-                while (ticks_ms()-t0)<2000:
+                while (ticks_ms()-t0)<5000:
                     motorR.off()
                     motorL.off()
                 proceed = 1
                 print("Dropping")
-            elif route[x]== 6: #turn 180
-                steer, lastError = direction_control.turn180("Left", TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
-                steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
-                proceed = 0
-                print("Turning 180")
             x+=1
         else: #no change detected, line following protocol
             steer, lastError = direction_control.straight(lineSensML, lineSensMR, lineSensFR, lineSensFL, lineSens MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
