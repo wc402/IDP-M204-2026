@@ -31,12 +31,31 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
                 proceed = 0
                 print("Going straight")
-            elif route[x]==1: #turn left
+            elif route[x]==1: #turn left no pick up
                 steer, lastError = direction_control.turn90("Left", TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
                 steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
                 proceed = 0
                 print("Turning left")
-            elif route[x]==2: #turn right
+            elif route[x]==1.5: #turn left pick up
+                steer, lastError = direction_control.turn90("Left", TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
+                steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+                #need distance sensor or colour sensor, or counter depending on turn
+                #could separate turn rights into other number cases
+                count = 1
+                end = False
+                while end == False:
+                    sleep(0.1) #reduce pause so straight line protocol occurs often 
+                    steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+                    count+=1
+                    if count == 20:
+                        end = True
+                proceed = 1
+                print("Turning left and picking up")
+            elif route[x]==2: #turning right no pick up
+                steer, lastError = direction_control.turn90("Right", TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
+                steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+                proceed = 0                
+            elif route[x]==2.5: #turn right pick up
                 steer, lastError = direction_control.turn90("Right", TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
                 steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
                 #need distance sensor or colour sensor, or counter depending on turn
@@ -50,7 +69,7 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                     if count == 20:
                         end = True
                 proceed = 1
-                print("Turning right")
+                print("Turning right and picking up")
             elif route[x]== 3: #pause to pick up then proceed
                 t0=ticks_ms()
                 while (ticks_ms()-t0)<1000:
