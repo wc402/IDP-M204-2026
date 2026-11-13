@@ -59,7 +59,7 @@ def turn90(direction, TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR
     return 0,0
 
 def turn180(direction, TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP):
-    steer, lastError = straight(lineSensML, lineSensMR, lineSensFR, lineSensFL, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+    steer, lastError = straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
     sleep(1) #Delay set to move wheels onto junction
     if direction=="Left":
         motorR.Forward(BASESPEED)

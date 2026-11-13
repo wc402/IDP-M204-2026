@@ -97,7 +97,7 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 print("Turning 180")
             x+=1
         else: #no change detected, line following protocol
-            steer, lastError = direction_control.straight(lineSensML, lineSensMR, lineSensFR, lineSensFL, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+            steer, lastError = direction_control.straight(lineSensML, lineSensMR, lineSensFR, lineSensFL, lineSens MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
     motorR.off()
     motorL.off()
     #sleep(0.05)
