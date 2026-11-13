@@ -1,5 +1,4 @@
 from utime import sleep_ms
-from direction_control import getLineSens
 
 def is_change_detected(lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL):
     no_checks = 5 #how many verification checks before commit to a move
