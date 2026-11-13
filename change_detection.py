@@ -8,7 +8,7 @@ def is_change_detected(lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, m
         if (lineSensFL.value()==1 or lineSensFR.value()==1): #change detected, outside sensor on
             majority += 1
             #pause to verify change
-        sleep_ms(5)
+        sleep_ms(1)
         
     return majority > 2
   
