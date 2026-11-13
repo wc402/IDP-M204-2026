@@ -17,7 +17,7 @@ def straight(lineSensML, lineSensMR, lineSensFR, lineSensFL, MAXSTEER, motorR, m
     if error !=0: #Robot off centre but still detecting line (only one sensor on). Correction grows with each step
         lastError=error
         steer-=error*STEP
-    if lineSensFR+lineSensFL==1:
+    if lineSensFR.value()+lineSensFL.value()==1:
         steer-=lastError*STEP
     elif lineSensML.value()==0 and lineSensMR.value()==0: #Line lost (both sensors off)
         steer+=lastError*STEP #Keep turn in the opposite direction as when a line last detected
@@ -69,7 +69,7 @@ def turn180(direction, TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensM
         motorL.Forward(BASESPEED)
 
     t0=ticks_ms()
-    sleep(10)
+    sleep(2*TIMEOUT)
     motorR.off()
     motorL.off()
     #if keeps turning for > TIMEOUT, motors stop
