@@ -20,8 +20,7 @@ def straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer,
 
 def turn90(direction, lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, time, steer, lastError, STEP):
     #firstly, move wheels onto junction
-    steer, lastError = straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
-    sleep(1)
+    steer, lastError = keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, 1, steer, lastError, STEP)
     
     #now, turn
     if direction=="Left":
@@ -38,7 +37,9 @@ def turn90(direction, lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEE
     return 0,0 #ideally after turning, sensors are back to middle of line
 
 def keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, time, steer, lastError, STEP):
-    #after turning, keep going in a straight line until TIMEOUT_PICK/DROP
+    #before turning, keep going in a straight line for 1 second to move wheels onto junction
+    #or
+    #after turning, keep going in a straight line for TIMEOUT_PICK/DROP milliseconds
     t0=ticks_ms()
     while ticks_diff(ticks_ms(), t0)<time:
         steer, lastError = straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
