@@ -37,7 +37,8 @@ def turn(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, moto
     
     #adjust back onto straight line after turn
     steer, lastError = 0,0
-    steer, lastError = line_lost(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
+    line_lost(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, SEARCH_SPEED)
+    steer, lastError = straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
     return steer, lastError
 
 
@@ -54,16 +55,28 @@ def keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, time
     return steer, lastError
 
 
-def line_lost(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP):
-    #SEARCH_SPEED for slowing down
-    #if direction == right
-        #if FR on, continue turning till MR on
-        #elif FL on, turn in opposite direction till ML on
-    #elif direction == left
-        #if FL on, continue turning till ML on
-        #elif FR on, turn in opposite direction till MR on
-    #error case if wrong Middle sensor turns on unexpected
-    #return to BASE_SPEED for straight line
+def line_lost(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, SEARCH_SPEED):
+    if direction == 'Right':
+        if lineSensFR.value()==1: #not turned enough
+            while lineSensMR.value()==0: #turn right until get middle sensor back on line
+                motorR.Reverse(SEARCH_SPEED)
+                motorL.Forward(SEARCH_SPEED)
+        elif lineSensFL.value()==1: #turned too much
+            while lineSensML.value()==0: #turn left until get middle sensor back on line
+                motorR.Forward(SEARCH_SPEED)
+                motorL.Reverse(SEARCH_SPEED)
+    elif direction == 'Left':
+        if lineSensFL.value()==1: #not turned enough
+            while lineSensML.value()==0: #turn left until get middle sensor back on line
+                motorL.Reverse(SEARCH_SPEED)
+                motorR.Forward(SEARCH_SPEED)
+        elif lineSensFR.value()==1: #turned too much
+            while lineSensMR.value()==0: #turn right until get middle sensor back on line
+                motorL.Forward(SEARCH_SPEED)
+                motorR.Reverse(SEARCH_SPEED)
+    #problem: if ML or MR never lights up, will be stuck in infinite loop
+    #problem: if both FL and FR are on, only executes first of if else statement
+    #problem: if both F and M sensors are on, what happens?
     
     
     
