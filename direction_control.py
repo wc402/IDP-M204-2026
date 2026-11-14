@@ -36,3 +36,9 @@ def turn90(direction, lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEE
     while ticks_diff(ticks_ms(), t0)<time: #finds elapsed time since t0
         pass
     return 0,0 #ideally after turning, sensors are back to middle of line
+
+def keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, time, steer, lastError, STEP):
+    #after turning, keep going in a straight line until TIMEOUT_PICK/DROP
+    t0=ticks_ms()
+    while ticks_diff(ticks_ms(), t0)<time:
+        steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
