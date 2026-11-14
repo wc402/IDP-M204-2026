@@ -55,23 +55,36 @@ def turn90(direction, TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR
         #lineSensML, lineSensMR= getLineSens(False)
     return 0,0
 
+def turn180(direction, TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP):
+    steer, lastError = straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+    sleep(1) #Delay set to move wheels onto junction
+    if direction=="Left":
+        motorR.Forward(BASESPEED)
+        motorL.Reverse(BASESPEED)
+    else:
+        motorR.Reverse(BASESPEED)
+        motorL.Forward(BASESPEED)
 
-def reverse(motorR, motorL, BASESPEED, lineSensFL, lineSensFR):
+    t0=ticks_ms()
+    while ticks_diff(ticks_ms(), t0)<2*TIMEOUT:
+        pass
+    return 0,0
+    
+def reverse(motorR, motorL, BASESPEED, lineSensFL, lineSensFR, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP):
     motorR.Reverse(BASESPEED)
     motorL.Reverse(BASESPEED)
-    sleep(3) # Allow robot to reverse off junction
-    #lineSensFL, lineSensML, lineSensMR, lineSensFR = getLineSens(True)
-    while (lineSensFL.value()==0 and lineSensFR.value()==0):
-        #lineSensFL, lineSensML, lineSensMR, lineSensFR = getLineSens(True)
-        pass
+    sleep(3)  # Allow robot to reverse off junction
+    while lineSensFL.value() == 0 and lineSensFR.value() == 0:
+        steer, lastError = straight_reverse(lineSensML, lineSensMR, MAXSTEER,motorR, motorL, BASESPEED, steer, lastError, STEP)
     motorR.off()
     motorL.off()
+    return steer, lastError
 
 def straight_reverse(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP):
     error= lineSensML.value()-lineSensMR.value()
     if error !=0: #Robot off centre but still detecting line (only one sensor on). Correction grows with each step
         lastError=error
-        steer-=error*STEP
+        steer+=error*STEP
     elif lineSensML.value()==0 and lineSensMR.value()==0: #Line lost (both sensors off)
         steer+=lastError*STEP #Keep turn in the opposite direction as when a line last detected
     else: #Following line correctly, do nothing
@@ -81,4 +94,5 @@ def straight_reverse(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED
     motorL.Reverse(BASESPEED-steer)
     print(lineSensML.value(), lineSensMR.value(), steer)
     return steer, lastError
+
 

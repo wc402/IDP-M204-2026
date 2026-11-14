@@ -26,15 +26,7 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
             act=False
             
             if route[x] ==0: #straight ahead
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
-                steer, lastError = direction_control.straight(lineSensML, lineSensMR, lineSensFR, lineSensFL, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
-=======
                 steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
->>>>>>> d45036a0af07dc5b4e4dbb54314ec9633cb1cfd9
-                steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
->>>>>>> Stashed changes
                 proceed = 0
                 print("Going straight")
             elif route[x]==1: #turn left
@@ -53,7 +45,7 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                     sleep(0.1) #reduce pause so straight line protocol occurs often 
                     steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
                     count+=1
-                    if count == 20:
+                    if count == 15:
                         end = True
                 proceed = 1
                 print("Turning right")
@@ -80,7 +72,7 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
             elif route[x]== 6: #turn 180
                 steer, lastError = direction_control.turn180("Left", TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
                 steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
-                proceed = 0
+                proceed = 1
                 print("Turning 180")
             x+=1
         else: #no change detected, line following protocol
@@ -90,7 +82,4 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
     #sleep(0.05)
             
         
-
-
-
-
+        
