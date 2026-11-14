@@ -16,12 +16,12 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
         if act == True:
             if route[x] == 0: #straight ahead
                 #straight line protocol
+                steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
             elif route[x] == 1: #left turn, default
                 #turn90
             elif route[x] == 2: #left turn, pickup
                 #turn 90
                 #proceed straight line for time_pick
-                #force change
             elif route[x] == 3: #left turn, dropoff
                 #turn 90
                 #proceed straight line for time_drop
@@ -30,24 +30,25 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
             elif route[x] == 5: #right turn, pickup
                 #turn 90
                 #proceed straight line for time_pick
-                #force change
             elif route[x] == 6: #right turn, dropoff
                 #turn 90
                 ##proceed straight line for time_drop
             elif route[x] == 7: #pickup (follows 2 or 5)
                 #stop motors for 3 seconds
-                #force change
-            elif route[x] == 8: #turn180 (follows 7 or 9)
+            elif route[x] == 8: #turn180 (follows 7)
                 #turn 180
             elif route[x] == 9: #dropoff
                 #stop motors for 3 seconds
-                #force change
+                motorR.off()
+                motorL.off()
+                sleep(3)
             elif route[x] == 10: #return (turn180 after end t-junction)
                 #turn 180
                 
             x+=1 #move onto next change
         else:
             #straight line protocol
+            steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
     
     #finished route
     motorR.off()
