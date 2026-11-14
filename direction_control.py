@@ -1,16 +1,5 @@
 from time import ticks_ms, ticks_diff, sleep
-#from machine import Pin
-#from motor_test import Motor
 
-#def getLineSens(getOuter):
-#    lineSensFL=Pin(28, Pin.IN, Pin.PULL_DOWN)
-#    lineSensML=Pin(27, Pin.IN, Pin.PULL_DOWN) #Change these pins to suit the actual wiring
-#    lineSensMR=Pin(26, Pin.IN, Pin.PULL_DOWN)
-#    lineSensFR=Pin(22, Pin.IN, Pin.PULL_DOWN)
-#    if getOuter:
-#        return (lineSensFL, lineSensML, lineSensMR, lineSensFR)
-#    else:
-#        return (lineSensML, lineSensMR)
 
 def straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP):
     error= lineSensML.value()-lineSensMR.value()
@@ -28,9 +17,10 @@ def straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer,
     motorL.Forward(BASESPEED+steer)
     return steer, lastError
 
-def turn90(direction, lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, time, steer, lastError, STEP):
+
+def turn90(direction, lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT, steer, lastError, STEP):
     #firstly, move wheels onto junction
-    steer, lastError = straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+    steer, lastError = straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
     sleep(1)
     
     #now, turn
@@ -43,9 +33,10 @@ def turn90(direction, lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEE
         
     #keep turning till break out of loop
     t0=ticks_ms() #records starting time
-    while ticks_diff(ticks_ms(), t0)<time: #finds elapsed time since t0
+    while ticks_diff(ticks_ms(), t0)<TIMEOUT: #finds elapsed time since t0
         pass
     return 0,0 #ideally after turning, sensors are back to middle of line
+
 
 def turn180(direction, TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP):
     steer, lastError = straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
