@@ -27,14 +27,14 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 print('Left')
                 #proceed straight line for time_pick
                 print('Continue till pickup bay')
-                direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT_PICK, steer, lastError, STEP)
+                steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT_PICK, steer, lastError, STEP)
             elif route[x] == 3: #left turn, dropoff
                 #turn 90
                 steer, lastError = direction_control.turn90('Left', lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT, steer, lastError, STEP)
                 print('Left')
                 #proceed straight line for time_drop
                 print('Continue till dropoff area')
-                direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT_DROP, steer, lastError, STEP)
+                steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT_DROP, steer, lastError, STEP)
             elif route[x] == 4: #right turn, default
                 #turn 90
                 steer, lastError = direction_control.turn90('Right', lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT, steer, lastError, STEP)
@@ -45,14 +45,14 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 print('Right')
                 #proceed straight line for time_pick
                 print('Continue till pickup bay')
-                direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT_PICK, steer, lastError, STEP)
+                steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT_PICK, steer, lastError, STEP)
             elif route[x] == 6: #right turn, dropoff
                 #turn 90
                 steer, lastError = direction_control.turn90('Right', lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT, steer, lastError, STEP)
                 print('Right')
                 #proceed straight line for time_drop
                 print('Continue till dropoff area')
-                direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT_DROP, steer, lastError, STEP)
+                steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT_DROP, steer, lastError, STEP)
             elif route[x] == 7: #pickup (forced change)
                 #stop motors for 3 seconds
                 motorR.off()

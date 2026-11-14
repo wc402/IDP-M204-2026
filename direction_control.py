@@ -41,4 +41,5 @@ def keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, time
     #after turning, keep going in a straight line until TIMEOUT_PICK/DROP
     t0=ticks_ms()
     while ticks_diff(ticks_ms(), t0)<time:
-        steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
+        steer, lastError = straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
+    return steer, lastError
