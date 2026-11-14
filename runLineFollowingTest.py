@@ -27,6 +27,7 @@ motorL=Motor(dirPin=7, PWMPin=6) #Connects to left wheel (dir/pwm swapped here)
 ## Route for line following test
 #toBay=[0,4,0,0,5,7,8,1,3,9,10,1,0,1,0]
 test=[0,0,0,0,2]
+#MAKE SURE TO NOT START ON A JUNCTION
 follow_route(test, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT, TIMEOUT_PICK, TIMEOUT_DROP, steer, lastError, STEP)
 
 #Number assignment (integers to avoid bugs)
