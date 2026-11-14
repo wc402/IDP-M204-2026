@@ -1,5 +1,5 @@
 from motor_test import Motor
-from change_implementation import follow_route
+from change_implementation_new import follow_route
 from machine import Pin
 #from direction_control import getLineSens
 
@@ -30,13 +30,13 @@ follow_route(test, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motor
 
 #Number assignment (integers to avoid bugs)
 #0: straight ahead
-#1: left turn, no pickup
+#1: left turn, default
 #2: left turn, pickup (distance sensor)
 #3: left turn, dropoff (colour sensor)
-#4: right turn, no pickup
+#4: right turn, default
 #5: right turn, pickup (distance sensor)
 #6: right turn, dropoff (colour sensor)
 #7: pickup (follows 2 or 5)
-#8: 180 (follows 7)
+#8: 180 (follows 7 or 9)
 #9: dropoff
-#10: return (same as 180 but doesn't follow 7, since it reaches a t-junction)
+#10: return (same as 180 but doesn't follow 7, since it reaches end t-junction)
