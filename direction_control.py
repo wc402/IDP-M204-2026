@@ -34,7 +34,7 @@ def turn90(direction, lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEE
     #keep turning till break out of loop
     t0=ticks_ms() #records starting time
     while ticks_diff(ticks_ms(), t0)<time: #finds elapsed time since t0
-        pass
+        sleep(0.001) #just to let processor rest
     return 0,0 #ideally after turning, sensors are back to middle of line
 
 def keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, time, steer, lastError, STEP):
@@ -42,4 +42,7 @@ def keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, time
     t0=ticks_ms()
     while ticks_diff(ticks_ms(), t0)<time:
         steer, lastError = straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
+    motorR.off()
+    motorL.off()
+    #theoretically, any change that calls keep_going is followed by a pause so this shouldn't matter, but just in case
     return steer, lastError

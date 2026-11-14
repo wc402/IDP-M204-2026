@@ -8,10 +8,9 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
     
     length = len(route)
     x=0
-    act = False #final decision on whether to make a change
     
     while x<length:
-        act = make_change(route[x], lineSensFL, lineSensFR)
+        act = make_change(route[x], lineSensFL, lineSensFR) #final decision on whether to make a change
         if act == True:
             if route[x] == 0: #straight ahead
                 #straight line protocol
@@ -73,6 +72,8 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 #turn 180 by applying turn 90 for 2*TIMEOUT
                 steer, lastError = direction_control.turn90('Left', lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, 2*TIMEOUT, steer, lastError, STEP)
                 print('Spin 180')
+            else:
+                print('Invalid route number?? ', route[x])
                 
             x+=1 #move onto next change
             #centre to line again before moving on (might cause problems for pickup->turn 180)
