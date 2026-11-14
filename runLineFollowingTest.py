@@ -11,7 +11,7 @@ TIMEOUT_PICK=960 # turn time limit (milliseconds)
 TIMEOUT_DROP=500 # turn time limit (milliseconds)
 steer=0 #current steering amount
 lastError =0 #error value to use if line lost
-STEP =1 #steering added per loop whilst off centre
+STEP =1 #bigger value = stronger correction
     
 # Get sensor readings
 lineSensFL=Pin(28, Pin.IN, Pin.PULL_DOWN)

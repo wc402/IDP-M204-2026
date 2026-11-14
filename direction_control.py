@@ -12,16 +12,18 @@ from time import ticks_ms, ticks_diff, sleep
 #    else:
 #        return (lineSensML, lineSensMR)
 
-def straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP):
+def straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP):
     error= lineSensML.value()-lineSensMR.value()
     if error !=0: #Robot off centre but still detecting line (only one sensor on). Correction grows with each step
         lastError=error
-        steer-=error*STEP
+        steer-=error*STEP #accumulate steer adjustment
     elif lineSensML.value()==0 and lineSensMR.value()==0: #Line lost (both sensors off)
-        steer+=lastError*STEP #Keep turn in the opposite direction as when a line last detected
+        steer+=lastError*STEP #Keep turning in the opposite direction as when a line last detected
     else: #Following line correctly, do nothing
-        steer = 0 
-    steer=max(-MAXSTEER, min(MAXSTEER, steer))
+        steer = 0
+        
+    steer=max(-MAXSTEER, min(MAXSTEER, steer)) #limits accumulated steer adjustment between -20 and 20
+    
     motorR.Forward(BASESPEED-steer)
     motorL.Forward(BASESPEED+steer)
     return steer, lastError
