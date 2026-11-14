@@ -6,12 +6,12 @@ from machine import Pin
 ## Initialise variables
 MAXSTEER=20 # maximum steering amount
 BASESPEED=70 #when driving straight, %
-TIMEOUT=990
-TIMEOUT_PICK=960 # turn time limit (milliseconds)
-TIMEOUT_DROP=500 # turn time limit (milliseconds)
+TIMEOUT=990 #turn time limit (milliseconds)
+TIMEOUT_PICK=960 #time to reach pickup bay (milliseconds)
+TIMEOUT_DROP=500 #time to reach dropoff area (milliseconds)
 steer=0 #current steering amount
 lastError =0 #error value to use if line lost
-STEP =1 #bigger value = stronger correction
+STEP =1 #weight given to error, bigger value = stronger correction
     
 # Get sensor readings
 lineSensFL=Pin(28, Pin.IN, Pin.PULL_DOWN)
