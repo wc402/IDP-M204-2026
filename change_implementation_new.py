@@ -9,10 +9,9 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
     length = len(route)
     x=0
     act = False #final decision on whether to make a change
-    already_changing = False #signals whether a change is currently being made
     
     while x<length:
-        act = make_change(lineSensFL, lineSensFR, route[x], already_changing)
+        act = make_change(route[x], lineSensFL, lineSensFR)
         if act == True:
             if route[x] == 0: #straight ahead
                 #straight line protocol

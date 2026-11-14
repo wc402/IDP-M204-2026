@@ -22,15 +22,10 @@ def is_change_forced(current_move):
   
   
   
-def make_change(lineSensFL, lineSensFR, current_move, already_changing):
-    if already_changing == False: #not currently making a change
-        
-        detect_change = is_change_detected(lineSensFL, lineSensFR)
-        force_change = is_change_forced(current_move)
-        
-        if detect_change == True or force_change == True:
-            return True
-        else:
-            return False
-    else: #currently implementing a change, ignore other outer sensor readings
+def make_change(current_move, lineSensFL, lineSensFR):
+    detect_change = is_change_detected(lineSensFL, lineSensFR)
+    force_change = is_change_forced(current_move)
+    if detect_change == True or force_change == True:
+        return True
+    else:
         return False
