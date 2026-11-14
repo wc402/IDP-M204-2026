@@ -18,7 +18,7 @@ def straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer,
     return steer, lastError
 
 
-def turn90(direction, lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, time, steer, lastError, STEP):
+def turn(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, time, steer, lastError, STEP):
     #firstly, move wheels onto junction
     steer, lastError = keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, 1, steer, lastError, STEP)
     
@@ -34,7 +34,12 @@ def turn90(direction, lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEE
     t0=ticks_ms() #records starting time
     while ticks_diff(ticks_ms(), t0)<time: #finds elapsed time since t0
         sleep(0.001) #just to let processor rest
-    return 0,0 #ideally after turning, sensors are back to middle of line
+    
+    #adjust back onto straight line after turn
+    steer, lastError = 0,0
+    steer, lastError = line_lost(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
+    return steer, lastError
+
 
 def keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, time, steer, lastError, STEP):
     #before turning, keep going in a straight line for 1 second to move wheels onto junction
@@ -47,3 +52,20 @@ def keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, time
     motorL.off()
     #theoretically, any change that calls keep_going is followed by a pause so this shouldn't matter, but just in case
     return steer, lastError
+
+
+def line_lost(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP):
+    #SEARCH_SPEED for slowing down
+    #if direction == right
+        #if FR on, continue turning till MR on
+        #elif FL on, turn in opposite direction till ML on
+    #elif direction == left
+        #if FL on, continue turning till ML on
+        #elif FR on, turn in opposite direction till MR on
+    #error case if wrong Middle sensor turns on unexpected
+    #return to BASE_SPEED for straight line
+    
+    
+    
+    
+    
