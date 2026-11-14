@@ -18,7 +18,7 @@ def straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer,
     return steer, lastError
 
 
-def turn90(direction, lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT, steer, lastError, STEP):
+def turn90(direction, lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, time, steer, lastError, STEP):
     #firstly, move wheels onto junction
     steer, lastError = straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
     sleep(1)
@@ -33,25 +33,10 @@ def turn90(direction, lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEE
         
     #keep turning till break out of loop
     t0=ticks_ms() #records starting time
-    while ticks_diff(ticks_ms(), t0)<TIMEOUT: #finds elapsed time since t0
+    while ticks_diff(ticks_ms(), t0)<time: #finds elapsed time since t0
         pass
     return 0,0 #ideally after turning, sensors are back to middle of line
 
-
-def turn180(direction, TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP):
-    steer, lastError = straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
-    sleep(1) #Delay set to move wheels onto junction
-    if direction=="Left":
-        motorR.Forward(BASESPEED)
-        motorL.Reverse(BASESPEED)
-    else:
-        motorR.Reverse(BASESPEED)
-        motorL.Forward(BASESPEED)
-
-    t0=ticks_ms()
-    while ticks_diff(ticks_ms(), t0)<2*TIMEOUT:
-        pass
-    return 0,0
     
 def reverse(motorR, motorL, BASESPEED, lineSensFL, lineSensFR, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP):
     motorR.Reverse(BASESPEED)
