@@ -63,7 +63,9 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 print('Dropoff')
                 sleep(3)
             elif route[x] == 10: #return (turn180 after end t-junction)
-                #turn 180
+                #turn 180 by applying turn 90 for 2*TIMEOUT
+                steer, lastError = direction_control.turn90('Left', lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, 2*TIMEOUT, steer, lastError, STEP)
+                print('Spin 180')
                 
             x+=1 #move onto next change
             #centre to line again before moving on (might cause problems for pickup->turn 180)

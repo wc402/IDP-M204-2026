@@ -38,6 +38,6 @@ follow_route(test, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motor
 #5: right turn, pickup (distance sensor)
 #6: right turn, dropoff (colour sensor)
 #7: pickup (follows 2 or 5)
-#8: 180 (follows 7)
+#8: 180 after pickup (follows 7)
 #9: dropoff
-#10: return (same as 180 but doesn't follow 7, since it reaches t-junction)
+#10: return (same as 180 but doesn't need forced, since it reaches t-junction)
