@@ -27,11 +27,17 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 steer, lastError = direction_control.turn90('Left', lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT, steer, lastError, STEP)
                 print('Left')
                 #proceed straight line for time_pick
+                t0=ticks_ms()
+                while ticks_diff(ticks_ms(), t0)<TIMEOUT_PICK:
+                    steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
             elif route[x] == 3: #left turn, dropoff
                 #turn 90
                 steer, lastError = direction_control.turn90('Left', lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT, steer, lastError, STEP)
                 print('Left')
                 #proceed straight line for time_drop
+                t0=ticks_ms()
+                while ticks_diff(ticks_ms(), t0)<TIMEOUT_DROP:
+                    steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
             elif route[x] == 4: #right turn, default
                 #turn 90
                 steer, lastError = direction_control.turn90('Right', lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT, steer, lastError, STEP)
@@ -41,18 +47,24 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 steer, lastError = direction_control.turn90('Right', lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT, steer, lastError, STEP)
                 print('Right')
                 #proceed straight line for time_pick
+                t0=ticks_ms()
+                while ticks_diff(ticks_ms(), t0)<TIMEOUT_PICK:
+                    steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
             elif route[x] == 6: #right turn, dropoff
                 #turn 90
                 steer, lastError = direction_control.turn90('Right', lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT, steer, lastError, STEP)
                 print('Right')
-                ##proceed straight line for time_drop
-            elif route[x] == 7: #pickup (follows 2 or 5)
+                #proceed straight line for time_drop
+                t0=ticks_ms()
+                while ticks_diff(ticks_ms(), t0)<TIMEOUT_DROP:
+                    steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
+            elif route[x] == 7: #pickup (forced change)
                 #stop motors for 3 seconds
                 motorR.off()
                 motorL.off()
                 print('Pickup')
                 sleep(3)
-            elif route[x] == 8: #turn180 (follows 7)
+            elif route[x] == 8: #turn180 (forced change)
                 #turn 180 by applying turn 90 for 2*TIMEOUT
                 steer, lastError = direction_control.turn90('Left', lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, 2*TIMEOUT, steer, lastError, STEP)
                 print('Spin 180')
