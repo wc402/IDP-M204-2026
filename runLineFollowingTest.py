@@ -6,8 +6,9 @@ from machine import Pin
 ## Initialise variables
 MAXSTEER=20 # maximum steering amount
 BASESPEED=70 #when driving straight, %
-TIMEOUT_PICK=960 # turn time limit (milliseconds)
 TIMEOUT=990
+TIMEOUT_PICK=960 # turn time limit (milliseconds)
+TIMEOUT_DROP=500 # turn time limit (milliseconds)
 steer=0 #current steering amount
 lastError =0 #error value to use if line lost
 STEP =1 #steering added per loop whilst off centre
@@ -26,7 +27,7 @@ motorL=Motor(dirPin=7, PWMPin=6) #Connects to left wheel (dir/pwm swapped here)
 ## Route for line following test
 #toBay=[0,4,0,0,5,7,8,1,3,9,10,1,0,1,0]
 test=[0,0,0,0,2]
-follow_route(test, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT, steer, lastError, STEP)
+follow_route(test, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT, TIMEOUT_PICK, TIMEOUT_DROP, steer, lastError, STEP)
 
 #Number assignment (integers to avoid bugs)
 #0: straight ahead
