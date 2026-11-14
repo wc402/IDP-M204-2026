@@ -24,8 +24,19 @@ motorR=Motor(dirPin=4, PWMPin=5) #Connects to right wheel
 motorL=Motor(dirPin=7, PWMPin=6) #Connects to left wheel (dir/pwm swapped here)
 
 ## Route for line following test
-#toBay=[1,0,2,0,0,0,2,3,4,2,0,0,1,5,4,2,1,0]
+#toBay=[0,4,0,0,5,7,8,1,3,9,10,1,0,1,0]
 test=[0,0,0,0,2]
 follow_route(test, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT, steer, lastError, STEP)
 
-
+#Number assignment (integers to avoid bugs)
+#0: straight ahead
+#1: left turn, no pickup
+#2: left turn, pickup (distance sensor)
+#3: left turn, dropoff (colour sensor)
+#4: right turn, no pickup
+#5: right turn, pickup (distance sensor)
+#6: right turn, dropoff (colour sensor)
+#7: pickup (follows 2 or 5)
+#8: 180 (follows 7)
+#9: dropoff
+#10: return (same as 180 but doesn't follow 7, since it reaches a t-junction)
