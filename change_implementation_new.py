@@ -14,12 +14,8 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
         if act == True:
             if route[x] == 0: #straight ahead
                 #straight line protocol
-                
-                while (lineSensFL.value() + lineSensFR.value() !=0):
-                    
                 steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
                 print('Straight ahead')
-                
             elif route[x] == 1: #left turn, default
                 #turn 90
                 steer, lastError = direction_control.turn('Left', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT_90, steer, lastError, STEP)

@@ -31,6 +31,7 @@ def is_clear_detected(lineSensFL, lineSensFR):
         #pause to verify change
         sleep_ms(1)
     #break out once verify no junction detected 5 times in a row
+    #problem: potential infinite loop
     
     
 def make_change(current_move, lineSensFL, lineSensFR):
