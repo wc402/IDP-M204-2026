@@ -10,7 +10,7 @@ SEARCH_SPEED=30 #when finding lost line
 TIMEOUT_90=990 #turn time limit (milliseconds)
 TIMEOUT_180 = 1980 #calibrate separately to TIMEOUT_90 for accuracy
 TIMEOUT_PICK=960 #time to reach pickup bay (milliseconds)
-TIMEOUT_DROP=500 #time to reach dropoff area (milliseconds)
+TIMEOUT_DROP=200 #time to reach dropoff area (milliseconds)
 steer=0 #current steering amount
 lastError =0 #error value to use if line lost
 STEP =1 #weight given to error, bigger value = stronger correction
@@ -30,6 +30,7 @@ motorL=Motor(dirPin=7, PWMPin=6) #Connects to left wheel (dir/pwm swapped here)
 #toBay=[0,4,0,0,5,7,8,1,3,9,10,1,0,1,0]
 test=[0,0,0,0,2]
 #MAKE SURE TO NOT START ON A JUNCTION
+#DONT LET TIMEOUT_DROP LET JUNCTION BE DETECTED
 follow_route(test, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT_90, TIMEOUT_180, TIMEOUT_PICK, TIMEOUT_DROP, steer, lastError, STEP)
 
 #Number assignment (integers to avoid bugs)

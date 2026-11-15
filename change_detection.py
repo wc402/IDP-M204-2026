@@ -21,7 +21,18 @@ def is_change_forced(current_move):
         return False
   
   
-  
+def is_clear_detected(lineSensFL, lineSensFR):
+    count = 0
+    while count < 5:
+        if lineSensFL.value() == 0 and lineSensFR.value() == 0: #no junction detected
+            clear_count += 1
+        else:
+            clear_count = 0
+        #pause to verify change
+        sleep_ms(1)
+    #break out once verify no junction detected 5 times in a row
+    
+    
 def make_change(current_move, lineSensFL, lineSensFR):
     detect_change = is_change_detected(lineSensFL, lineSensFR)
     force_change = is_change_forced(current_move)

@@ -1,4 +1,4 @@
-from change_detection import make_change
+from change_detection import make_change, is_clear_detected
 import direction_control
 from time import sleep, ticks_ms, ticks_diff
 
@@ -15,12 +15,10 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
             if route[x] == 0: #straight ahead
                 #straight line protocol
                 
-                #ERROR YET TO BE FIXED, GIVE ME A COUPLE HOURS
                 while (lineSensFL.value() + lineSensFR.value() !=0):
                     
                 steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
                 print('Straight ahead')
-                #REST SHOULD BE FINE
                 
             elif route[x] == 1: #left turn, default
                 #turn 90
@@ -80,10 +78,13 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 print('Spin 180')
             else:
                 print('Invalid route number?? ', route[x])
-                
+            
+            if route[x] not in [7,8,9,10]:
+                #will continue last motor settings until junction is cleared
+                is_clear_detected(lineSensFL, lineSensFR)
+            #if route[x] is in [7,8,9,10] then don't want to need junction cleared to continue
             x+=1 #move onto next change
-            #centre to line again before moving on (might cause problems for pickup->turn 180)
-            #steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
+            
         else:
             #straight line protocol
             steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
