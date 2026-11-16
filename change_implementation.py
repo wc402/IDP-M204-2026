@@ -24,55 +24,92 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
         #Note: should never be the case that change == True and proceed = 1
         if change:
             act=False
-            
+
             if route[x] ==0: #straight ahead
-                steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+                t0=ticks_ms()
+                while ticks_diff(ticks_ms(), t0)<300: #how long to pass junction
+                    steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+                motorR.off()
+                motorL.off()
                 proceed = 0
                 print("Going straight")
-            elif route[x]==1: #turn left
-                steer, lastError = direction_control.turn90("Left", TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
-                steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+            elif route[x]==1: #turn left before dropoff
+                steer, lastError = direction_control.turn90(route[x],"Left", 990, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
+                t0=ticks_ms()
+                while ticks_diff(ticks_ms(), t0)<500:
+                    steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+                motorR.off()
+                motorL.off()
+                proceed = 1
+                print("Turning left")
+            elif route[x]==1.5: #turn left
+                steer, lastError = direction_control.turn90(route[x],"Left", 1200, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
+                t0=ticks_ms()
+                while ticks_diff(ticks_ms(), t0)<300:
+                    steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+                motorR.off()
+                motorL.off()
                 proceed = 0
                 print("Turning left")
-            elif route[x]==2: #turn right
-                steer, lastError = direction_control.turn90("Right", TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
-                steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
-                #need distance sensor or colour sensor, or counter depending on turn
-                #could separate turn rights into other number cases
-                count = 1
-                end = False
-                while end == False:
-                    sleep(0.1) #reduce pause so straight line protocol occurs often 
+            elif route[x]==1.7: #turn last left
+                steer, lastError = direction_control.turn90(route[x],"Left", 1200, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
+                t0=ticks_ms()
+                while ticks_diff(ticks_ms(), t0)<300:
                     steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
-                    count+=1
-                    if count == 15:
-                        end = True
+                motorR.off()
+                motorL.off()
+                proceed = 0
+                print("Turning left")
+            elif route[x]==2: #turn right before pickup
+                steer, lastError = direction_control.turn90(route[x],"Right", 1100, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
+                t0=ticks_ms()
+                while ticks_diff(ticks_ms(), t0)<2000:
+                    steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+                motorR.off()
+                motorL.off()
                 proceed = 1
                 print("Turning right")
+            elif route[x]==2.5: #turn right default
+                steer, lastError = direction_control.turn90(route[x],"Right", 1100, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
+                t0=ticks_ms()
+                while ticks_diff(ticks_ms(), t0)<500:
+                    steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+                motorR.off()
+                motorL.off()
+                print("Turning right")
+                proceed = 0
             elif route[x]== 3: #pause to pick up then proceed
                 t0=ticks_ms()
-                while (ticks_ms()-t0)<1000:
+                while (ticks_ms()-t0)<3000:
                     motorR.off()
                     motorL.off()
                 proceed = 1
                 print("Picking up")
-            elif route[x]== 4: #backup
-                steer, lastError = direction_control.reverse(motorR, motorL, BASESPEED, lineSensFL, lineSensFR, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
-                sleep(1)
-                proceed = 0
-                act=True
-                print("Reversing")
             elif route[x]== 5: #pause to drop then proceed
                 t0=ticks_ms()
                 while (ticks_ms()-t0)<2000:
                     motorR.off()
                     motorL.off()
-                proceed = 1
+                proceed = 1 #or 0?
                 print("Dropping")
-            elif route[x]== 6: #turn 180
-                steer, lastError = direction_control.turn180("Left", TIMEOUT, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
-                steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
-                proceed = 1
+            elif route[x]== 6: #turn 180 after pickup
+                steer, lastError = direction_control.turn180("Left", 2300, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
+                t0=ticks_ms()
+                while ticks_diff(ticks_ms(), t0)<1000:
+                    steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+                motorR.off()
+                motorL.off()
+                proceed = 0
+                print("Turning 180")
+            elif route[x]== 6.5: #turn 180 after dropoff
+                t0=ticks_ms()
+                while ticks_diff(ticks_ms(), t0)<1000:
+                    steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+                steer, lastError = direction_control.turn180("Left", 2300, motorR, motorL, BASESPEED, lineSensML, lineSensMR, MAXSTEER, steer, lastError, STEP)
+                t0=ticks_ms()
+                while ticks_diff(ticks_ms(), t0)<500:
+                    steer, lastError = direction_control.straight(lineSensML, lineSensMR, MAXSTEER, motorR, motorL, BASESPEED, steer, lastError, STEP)
+                proceed = 0
                 print("Turning 180")
             x+=1
         else: #no change detected, line following protocol
