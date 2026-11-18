@@ -7,22 +7,24 @@ from machine import Pin
 MAXSTEER=20 # maximum steering amount
 BASESPEED=70 #when driving straight, %
 SEARCH_SPEED=30 #when finding lost line
+
 TIMEOUT_STRAIGHT=300 #time to go straight ahead, passing ONE junction
-TIMEOUT_90=990 #turn time limit (milliseconds)
-TIMEOUT_180 = 1980 #calibrate separately to TIMEOUT_90 for accuracy
+TIMEOUT_90=980 #turn time limit (milliseconds)
+TIMEOUT_180 = 1800 #calibrate separately to TIMEOUT_90 for accuracy
 TIMEOUT_PICK=2000 #time to reach pickup bay (milliseconds)
 TIMEOUT_DROP=100 #time to reach dropoff area (milliseconds)
-TIMEOUT_JUNCTION = 500 #time to get wheels on junction
+TIMEOUT_JUNCTION = 800 #time to get wheels on junction
 TIMEOUT_STRAIGHT_AFTER_TURNING=100 #not too long that we miss next junction
+
 steer=0 #current steering amount
 lastError =0 #error value to use if line lost
 STEP =1 #weight given to error, bigger value = stronger correction
     
 # Get sensor readings
-lineSensFL=Pin(28, Pin.IN, Pin.PULL_DOWN)
-lineSensML=Pin(27, Pin.IN, Pin.PULL_DOWN) #Change these pins to suit the actual wiring
+lineSensFL=Pin(20, Pin.IN, Pin.PULL_DOWN)
+lineSensML=Pin(22, Pin.IN, Pin.PULL_DOWN) #Change these pins to suit the actual wiring
 lineSensMR=Pin(26, Pin.IN, Pin.PULL_DOWN)
-lineSensFR=Pin(22, Pin.IN, Pin.PULL_DOWN)
+lineSensFR=Pin(16, Pin.IN, Pin.PULL_DOWN)
 #lineSensFL, lineSensML, lineSensMR, lineSensFR=getLineSens(True)
 
 ##Connect to motors
@@ -35,14 +37,16 @@ TIMEOUT = [TIMEOUT_STRAIGHT, TIMEOUT_90, TIMEOUT_180, TIMEOUT_PICK, TIMEOUT_DROP
 test1=[0,0,0] #straight line
 test2=[0,4] #first right turn
 test3=[0,4,0,0,0]#from start to before pickup
-test4=[0,0,0,0,0,5]#turn to pickup
-test5=[0,0,0,0,0,5,7,9,1]#pickup and turn
-test6=[0,0,0,0,0,5,7,9,1,0,0,0,0]#pickup and turn
-test7=[0,3,8,10,1,1,0]#dropoff and return
-test8=[0,4,0,0,0,0,0,0,0,5,7,9,1,0,0,0,0,0,3,8,10,1,1,0]#whole route
+test4=[0,0,0,5]#turn to pickup
+test5=[0,0,0,0,0,5,7,9,1,0]#pickup and turn
+test6=[0,0,0,0,0,5,7,9,1,0,0,0,0]#pickup and turn and continue
+test7=[0,3,8,11,4,1,0,0]#dropoff and return
+test8=[0,4,0,0,0,0,0,0,0,5,7,9,1,0,0,0,0,0,3,8,11,0,1,0,1,0,0]#whole route
+test9=[0,0,0,0,0,5,7,9,1,0,0,0,0,0,0,0,1,0]#pickup and return
+
 
 #DONT LET TIMEOUT_DROP LET JUNCTION BE DETECTED
-follow_route(test1, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
+follow_route(test6, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
 
 #Number assignment (integers to avoid bugs)
 #0: straight ahead

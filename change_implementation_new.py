@@ -36,8 +36,8 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 motorL.off()
                     
             elif route[x] == 3: #left turn, dropoff
-                steer, lastError = direction_control.turn('Left', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
                 print('Left')
+                steer, lastError = direction_control.turn('Left', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
                 #proceed straight line for time_drop
                 print('Continue till dropoff area')
                 steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT[4], steer, lastError, STEP)
@@ -45,8 +45,8 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 steer, lastError = direction_control.turn('Right', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
                 print('Right')
             elif route[x] == 5: #right turn, pickup
-                steer, lastError = direction_control.turn('Right', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
                 print('Right')
+                steer, lastError = direction_control.turn('Right', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
                 #proceed straight line for time_pick
                 #print('Continue till pickup bay')
                 #t0=0
@@ -89,6 +89,10 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
             elif route[x] == 10: #return (turn180 after end t-junction)
                 steer, lastError = direction_control.turn180('Left', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
                 print('Spin 180')
+            elif route[x] == 11: #reverse
+                print('Reverse')
+                while lineSensFL.value() != 1 or lineSensFR.value() != 1:
+                    steer, lastError = direction_control.reverse(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
             else:
                 print('Invalid route number?? ', route[x])
             

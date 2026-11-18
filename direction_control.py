@@ -90,20 +90,20 @@ def keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, time
 def keep_turning(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, SEARCH_SPEED):
     if direction == 'Right':
         if lineSensFR.value()==1: #not turned enough
-            while lineSensMR.value()==0: #turn right until get middle sensor back on line
+            while lineSensML.value()==0: #turn right until get middle sensor back on line
                 motorR.Reverse(SEARCH_SPEED)
                 motorL.Forward(SEARCH_SPEED)
         elif lineSensFL.value()==1: #turned too much
-            while lineSensML.value()==0: #turn left until get middle sensor back on line
+            while lineSensMR.value()==0: #turn left until get middle sensor back on line
                 motorR.Forward(SEARCH_SPEED)
                 motorL.Reverse(SEARCH_SPEED)
     elif direction == 'Left':
         if lineSensFL.value()==1: #not turned enough
-            while lineSensML.value()==0: #turn left until get middle sensor back on line
+            while lineSensMR.value()==0: #turn left until get middle sensor back on line
                 motorL.Reverse(SEARCH_SPEED)
                 motorR.Forward(SEARCH_SPEED)
         elif lineSensFR.value()==1: #turned too much
-            while lineSensMR.value()==0: #turn right until get middle sensor back on line
+            while lineSensML.value()==0: #turn right until get middle sensor back on line
                 motorL.Forward(SEARCH_SPEED)
                 motorR.Reverse(SEARCH_SPEED)
     #problem: if ML or MR never lights up, will be stuck in infinite loop
@@ -111,6 +111,19 @@ def keep_turning(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, moto
     #problem: if both F and M sensors are on, what happens?
     
     
+def reverse(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP):
+    error= lineSensML.value()-lineSensMR.value()
+    if error !=0: #Robot off centre but still detecting line (only one sensor on). Correction grows with each step
+        lastError=error
+        steer-=error*STEP #accumulate steer adjustment
+    elif lineSensML.value()==0 and lineSensMR.value()==0: #Line lost (both sensors off)
+        steer+=lastError*STEP #Keep turning in the opposite direction as when a line last detected
+    else: #Following line correctly, do nothing
+        steer = 0
+        
+    steer=max(-MAXSTEER, min(MAXSTEER, steer)) #limits accumulated steer adjustment between -20 and 20
     
-    
+    motorR.Reverse(BASESPEED+steer)
+    motorL.Reverse(BASESPEED-steer)
+    return steer, lastError
     
