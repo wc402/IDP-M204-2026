@@ -1,6 +1,7 @@
-from machine import Pin, Timer, ADC
+from machine import Pin, PWM, ADC
 from time import ticks_ms, ticks_diff
-from motor_test import Motor
+from motor import Motor
+from distance_sensor import ToF
 
 ## Calibration constants
 BASESPEED=70
@@ -26,10 +27,10 @@ route=[]
 class Robot:
     def __init__(self):
         ## Set up I/O components
-        self.lineSensFL=Pin(27, Pin.IN, Pin.PULL_DOWN)
-        self.lineSensML=Pin(26, Pin.IN, Pin.PULL_DOWN)
-        self.lineSensMR=Pin(22, Pin.IN, Pin.PULL_DOWN)
-        self.lineSensFR=Pin(21, Pin.IN, Pin.PULL_DOWN)
+        self.lineSensFL=Pin(20, Pin.IN, Pin.PULL_DOWN)
+        self.lineSensML=Pin(22, Pin.IN, Pin.PULL_DOWN)
+        self.lineSensMR=Pin(26, Pin.IN, Pin.PULL_DOWN)
+        self.lineSensFR=Pin(16, Pin.IN, Pin.PULL_DOWN)
         self.motorR=Motor(dirPin=4, PWMPin=5)
         self.motorL=Motor(dirPin=7, PWMPin=6)
         self.motorServo=None
@@ -37,13 +38,13 @@ class Robot:
         self.LEDY=Pin(11, Pin.OUT) #LEDs
         self.LEDR=Pin(10, Pin.OUT)
         self.LEDG=Pin(12, Pin.OUT)
-        self.distanceSens=None
+        self.distanceSens=ToF()
         self.hallSens=None
         self.IRSens=None
         self.torqueSens=None
         self.buttonSS.irq(trigger=Pin.IRQ_RISING, handler=self.on_button)
         
-        ## Add torque, hall, IR and distancce sensors; servo motor
+        ## Add torque, hall, IR sensors; servo motor
         
         ## Initialise task variables
         self.steer = 0
@@ -217,19 +218,19 @@ class Robot:
                     self.route_step+=1
                     self.change_state(PARKING)
     def run_detecting(self):
-        if self.distanceSens.value()<HALL_DISTANCE:
+        if self.distanceSens.read_distance()<HALL_DISTANCE:
             self.run_move_straight(self)
-        elif self.distanceSens.value()>=HALL_DISTANCE:
+        elif self.distanceSens.read_distance()>=HALL_DISTANCE:
             self.motorR.off()
             self.motorL.off()
-            if self.hallSens.value()>HALL_LIMIT:
+            if abs(self.hallSens.value())>HALL_LIMIT:
                 self.change_state(GRABBING)
             else:
                 self.change_state(TURNING)
     def run_grabbing(self):
-        if self.distanceSens.value()<GRAB_DISTANCE:
+        if self.distanceSens.read_distance()<GRAB_DISTANCE:
             self.run_move_straight(self)
-        elif self.distanceSens.value()>=GRAB_DISTANCE:
+        elif self.distanceSens.read_distance()>=GRAB_DISTANCE:
             #Engage grabber-complete when more known
             self.change_state(TURNING)
     def run_releasing(self):
