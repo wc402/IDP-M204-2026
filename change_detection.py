@@ -15,7 +15,7 @@ def is_change_detected(lineSensFL, lineSensFR):
   
 
 def is_change_forced(current_move):
-    if current_move == 7 or current_move == 8: #the actions which require a forced change
+    if current_move == 7 or current_move == 9: #the actions which require a forced change
         return True
     else:
         return False

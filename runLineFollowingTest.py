@@ -13,7 +13,7 @@ TIMEOUT_180 = 1980 #calibrate separately to TIMEOUT_90 for accuracy
 TIMEOUT_PICK=960 #time to reach pickup bay (milliseconds)
 TIMEOUT_DROP=200 #time to reach dropoff area (milliseconds)
 TIMEOUT_JUNCTION = 1000 #time to get wheels on junction
-#TIMEOUT_STRAIGHT_AFTER_TURNING=200
+TIMEOUT_STRAIGHT_AFTER_TURNING=100 #not too long that we miss next junction
 steer=0 #current steering amount
 lastError =0 #error value to use if line lost
 STEP =1 #weight given to error, bigger value = stronger correction
@@ -30,7 +30,7 @@ motorR=Motor(dirPin=4, PWMPin=5) #Connects to right wheel
 motorL=Motor(dirPin=7, PWMPin=6) #Connects to left wheel (dir/pwm swapped here)
 
 #Timeout list
-TIMEOUT = [TIMEOUT_STRAIGHT, TIMEOUT_90, TIMEOUT_180, TIMEOUT_PICK, TIMEOUT_DROP, TIMEOUT_JUNCTION]
+TIMEOUT = [TIMEOUT_STRAIGHT, TIMEOUT_90, TIMEOUT_180, TIMEOUT_PICK, TIMEOUT_DROP, TIMEOUT_JUNCTION, TIMEOUT_STRAIGHT_AFTER_TURNING]
 ## Route for line following test
 #toBay=[0,4,0,0,5,7,8,1,3,9,10,1,0,1,0]
 test=[0,0,0,0,2]

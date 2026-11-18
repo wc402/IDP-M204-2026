@@ -22,58 +22,64 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 print('Left')
                 #proceed straight line for time_pick
                 #print('Continue till pickup bay')
-                #steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT_PICK, steer, lastError, STEP)
-                
-                #time of flight sensor
-                #hall sensor
-                
+                #t0=0
+                #while time_of_flight doesn't pick smt up
+                #    if ticks_diff(ticks_ms(), t0)<time:
+                #       steer, lastError = straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
+                #    else: reached pickup zone without detecting
+                #        break
+                #motorR.off()
+                #motorL.off()
+                    
             elif route[x] == 3: #left turn, dropoff
-                #turn 90
-                steer, lastError = direction_control.turn('Left', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT_90, steer, lastError, STEP)
+                steer, lastError = direction_control.turn('Left', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
                 print('Left')
                 #proceed straight line for time_drop
                 print('Continue till dropoff area')
-                steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT_DROP, steer, lastError, STEP)
+                steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT[4], steer, lastError, STEP)
             elif route[x] == 4: #right turn, default
-                #turn 90
-                steer, lastError = direction_control.turn('Right', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT_90, steer, lastError, STEP)
+                steer, lastError = direction_control.turn('Right', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
                 print('Right')
             elif route[x] == 5: #right turn, pickup
                 steer, lastError = direction_control.turn('Right', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
                 print('Right')
                 #proceed straight line for time_pick
                 #print('Continue till pickup bay')
-                #steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT_PICK, steer, lastError, STEP)
-                
-                #time of flight sensor
-                #hall sensor
+                #t0=0
+                #while time_of_flight.value() < distance needed to start pickup:
+                #    if ticks_diff(ticks_ms(), t0)<time to get closest to pickup:
+                #       steer, lastError = straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
+                #    else: reached closest to pickup zone without detecting
+                #        break
+                #motorR.off()
+                #motorL.off()
                 
             elif route[x] == 6: #right turn, dropoff
-                #turn 90
-                steer, lastError = direction_control.turn('Right', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT_90, steer, lastError, STEP)
+                steer, lastError = direction_control.turn('Right', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
                 print('Right')
                 #proceed straight line for time_drop
                 print('Continue till dropoff area')
-                steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT_DROP, steer, lastError, STEP)
+                steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT[4], steer, lastError, STEP)
             elif route[x] == 7: #pickup (forced change)
+                #hall sensor stuff
                 #stop motors for 3 seconds
                 motorR.off()
                 motorL.off()
                 print('Pickup')
+                #actual pickup function
                 sleep(3)
-            elif route[x] == 8: #turn180 (forced change)
-                #turn 180
-                steer, lastError = direction_control.turn('Left', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT_180, steer, lastError, STEP)
-                print('Spin 180')
-            elif route[x] == 9: #dropoff
+            elif route[x] == 8: #dropoff
                 #stop motors for 3 seconds
                 motorR.off()
                 motorL.off()
                 print('Dropoff')
+                #actual dropoff function
                 sleep(3)
+            elif route[x] == 9: #turn180 (forced change)
+                steer, lastError = direction_control.turn180('Left', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
+                print('Spin 180')
             elif route[x] == 10: #return (turn180 after end t-junction)
-                #turn 180
-                steer, lastError = direction_control.turn('Left', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT_180, steer, lastError, STEP)
+                steer, lastError = direction_control.turn180('Left', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
                 print('Spin 180')
             else:
                 print('Invalid route number?? ', route[x])
