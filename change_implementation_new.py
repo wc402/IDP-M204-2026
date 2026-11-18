@@ -3,8 +3,7 @@ import direction_control
 from time import sleep, ticks_ms, ticks_diff
 
 
-#e.g. route = left_bay
-def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT_90, TIMEOUT_180, TIMEOUT_PICK, TIMEOUT_DROP, steer, lastError, STEP):
+def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP):
     
     length = len(route)
     x=0
@@ -13,12 +12,10 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
         act = make_change(route[x], lineSensFL, lineSensFR) #final decision on whether to make a change
         if act == True:
             if route[x] == 0: #straight ahead
-                #straight line protocol
-                steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
+                steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT[0], steer, lastError, STEP)
                 print('Straight ahead')
             elif route[x] == 1: #left turn, default
-                #turn 90
-                steer, lastError = direction_control.turn('Left', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT_90, steer, lastError, STEP)
+                steer, lastError = direction_control.turn('Left', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
                 print('Left')
             elif route[x] == 2: #left turn, pickup
                 #turn 90

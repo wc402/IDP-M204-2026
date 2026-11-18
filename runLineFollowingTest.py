@@ -7,10 +7,13 @@ from machine import Pin
 MAXSTEER=20 # maximum steering amount
 BASESPEED=70 #when driving straight, %
 SEARCH_SPEED=30 #when finding lost line
+TIMEOUT_STRAIGHT=300 #time to go straight ahead, passing ONE junction
 TIMEOUT_90=990 #turn time limit (milliseconds)
 TIMEOUT_180 = 1980 #calibrate separately to TIMEOUT_90 for accuracy
 TIMEOUT_PICK=960 #time to reach pickup bay (milliseconds)
 TIMEOUT_DROP=200 #time to reach dropoff area (milliseconds)
+TIMEOUT_JUNCTION = 1000 #time to get wheels on junction
+#TIMEOUT_STRAIGHT_AFTER_TURNING=200
 steer=0 #current steering amount
 lastError =0 #error value to use if line lost
 STEP =1 #weight given to error, bigger value = stronger correction
@@ -26,12 +29,13 @@ lineSensFR=Pin(22, Pin.IN, Pin.PULL_DOWN)
 motorR=Motor(dirPin=4, PWMPin=5) #Connects to right wheel
 motorL=Motor(dirPin=7, PWMPin=6) #Connects to left wheel (dir/pwm swapped here)
 
+#Timeout list
+TIMEOUT = [TIMEOUT_STRAIGHT, TIMEOUT_90, TIMEOUT_180, TIMEOUT_PICK, TIMEOUT_DROP, TIMEOUT_JUNCTION]
 ## Route for line following test
 #toBay=[0,4,0,0,5,7,8,1,3,9,10,1,0,1,0]
 test=[0,0,0,0,2]
-#MAKE SURE TO NOT START ON A JUNCTION
 #DONT LET TIMEOUT_DROP LET JUNCTION BE DETECTED
-follow_route(test, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT_90, TIMEOUT_180, TIMEOUT_PICK, TIMEOUT_DROP, steer, lastError, STEP)
+follow_route(test, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
 
 #Number assignment (integers to avoid bugs)
 #0: straight ahead

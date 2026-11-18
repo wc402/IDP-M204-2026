@@ -19,8 +19,17 @@ def straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer,
 
 
 def turn(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, time, steer, lastError, STEP):
+    turn_time = time[1]
+    wheels_on_junction_time = time[5]
+    straight_time = time[0]
+    
     #firstly, move wheels onto junction
-    steer, lastError = keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, 1, steer, lastError, STEP)
+    #WITHOUT line correction since some turns don't have a line continuation
+    t0=ticks_ms()
+    while ticks_diff(ticks_ms(), t0)<wheels_on_junction_time:
+        motorR.Forward(BASESPEED)
+        motorL.Forward(BASESPEED)
+    #steer, lastError = keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, wheels_on_junction_time, steer, lastError, STEP)
     
     #now, turn
     if direction=="Left":
@@ -32,30 +41,26 @@ def turn(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, moto
         
     #keep turning till break out of loop
     t0=ticks_ms() #records starting time
-    while ticks_diff(ticks_ms(), t0)<time: #finds elapsed time since t0
+    while ticks_diff(ticks_ms(), t0)<turn_time: #finds elapsed time since t0
         sleep(0.001) #just to let processor rest
     
     #adjust back onto straight line after turn
     steer, lastError = 0,0
-    line_lost(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, SEARCH_SPEED)
-    steer, lastError = straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
+    keep_turning(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, SEARCH_SPEED)
+    steer, lastError = keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, straight_time, steer, lastError, STEP)
     return steer, lastError
 
 
 def keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, time, steer, lastError, STEP):
-    #before turning, keep going in a straight line for 1 second to move wheels onto junction
-    #or
-    #after turning, keep going in a straight line for TIMEOUT_PICK/DROP milliseconds
     t0=ticks_ms()
     while ticks_diff(ticks_ms(), t0)<time:
         steer, lastError = straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
     motorR.off()
     motorL.off()
-    #theoretically, any change that calls keep_going is followed by a pause so this shouldn't matter, but just in case
     return steer, lastError
 
 
-def line_lost(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, SEARCH_SPEED):
+def keep_turning(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, SEARCH_SPEED):
     if direction == 'Right':
         if lineSensFR.value()==1: #not turned enough
             while lineSensMR.value()==0: #turn right until get middle sensor back on line
