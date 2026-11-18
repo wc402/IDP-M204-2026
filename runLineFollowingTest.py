@@ -10,9 +10,9 @@ SEARCH_SPEED=30 #when finding lost line
 TIMEOUT_STRAIGHT=300 #time to go straight ahead, passing ONE junction
 TIMEOUT_90=990 #turn time limit (milliseconds)
 TIMEOUT_180 = 1980 #calibrate separately to TIMEOUT_90 for accuracy
-TIMEOUT_PICK=960 #time to reach pickup bay (milliseconds)
-TIMEOUT_DROP=200 #time to reach dropoff area (milliseconds)
-TIMEOUT_JUNCTION = 1000 #time to get wheels on junction
+TIMEOUT_PICK=2000 #time to reach pickup bay (milliseconds)
+TIMEOUT_DROP=100 #time to reach dropoff area (milliseconds)
+TIMEOUT_JUNCTION = 500 #time to get wheels on junction
 TIMEOUT_STRAIGHT_AFTER_TURNING=100 #not too long that we miss next junction
 steer=0 #current steering amount
 lastError =0 #error value to use if line lost
@@ -32,20 +32,27 @@ motorL=Motor(dirPin=7, PWMPin=6) #Connects to left wheel (dir/pwm swapped here)
 #Timeout list
 TIMEOUT = [TIMEOUT_STRAIGHT, TIMEOUT_90, TIMEOUT_180, TIMEOUT_PICK, TIMEOUT_DROP, TIMEOUT_JUNCTION, TIMEOUT_STRAIGHT_AFTER_TURNING]
 ## Route for line following test
-#toBay=[0,4,0,0,5,7,8,1,3,9,10,1,0,1,0]
-test=[0,0,0,0,2]
+test1=[0,0,0] #straight line
+test2=[0,4] #first right turn
+test3=[0,4,0,0,0]#from start to before pickup
+test4=[0,0,0,0,0,5]#turn to pickup
+test5=[0,0,0,0,0,5,7,9,1]#pickup and turn
+test6=[0,0,0,0,0,5,7,9,1,0,0,0,0]#pickup and turn
+test7=[0,3,8,10,1,1,0]#dropoff and return
+test8=[0,4,0,0,0,0,0,0,0,5,7,9,1,0,0,0,0,0,3,8,10,1,1,0]#whole route
+
 #DONT LET TIMEOUT_DROP LET JUNCTION BE DETECTED
-follow_route(test, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
+follow_route(test1, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
 
 #Number assignment (integers to avoid bugs)
 #0: straight ahead
 #1: left turn, default
 #2: left turn, pickup (distance sensor)
-#3: left turn, dropoff (colour sensor)
+#3: left turn, dropoff
 #4: right turn, default
 #5: right turn, pickup (distance sensor)
-#6: right turn, dropoff (colour sensor)
+#6: right turn, dropoff
 #7: pickup (follows 2 or 5)
-#8: 180 after pickup (follows 7)
-#9: dropoff
+#8: dropoff
+#9: 180 after pickup (follows 7)
 #10: return (same as 180 but doesn't need forced, since it reaches t-junction)

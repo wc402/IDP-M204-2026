@@ -30,6 +30,10 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 #        break
                 #motorR.off()
                 #motorL.off()
+                
+                steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT[3], steer, lastError, STEP)
+                motorR.off()
+                motorL.off()
                     
             elif route[x] == 3: #left turn, dropoff
                 steer, lastError = direction_control.turn('Left', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
@@ -53,6 +57,10 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 #        break
                 #motorR.off()
                 #motorL.off()
+                
+                steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT[3], steer, lastError, STEP)
+                motorR.off()
+                motorL.off()
                 
             elif route[x] == 6: #right turn, dropoff
                 steer, lastError = direction_control.turn('Right', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
@@ -84,11 +92,11 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
             else:
                 print('Invalid route number?? ', route[x])
             
-            if route[x] not in [7,8,9,10]:
+            #if route[x] not in [7,8,9,10]:
                 #will continue last motor settings until junction is cleared
-                is_clear_detected(lineSensFL, lineSensFR)
+                #is_clear_detected(lineSensFL, lineSensFR)
             #if route[x] is in [7,8,9,10] then don't want to need junction cleared to continue
-            x+=1 #move onto next change
+            x+=1
             
         else:
             #straight line protocol
