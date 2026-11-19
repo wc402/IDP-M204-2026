@@ -12,33 +12,33 @@ HALL_LIMIT=0 #Value above which a package is determined to contain a magnet(cali
 HALL_DISTANCE=0#Distance at which Hall reading is taken (calibrate)
 GRAB_DISTANCE =0#Distance at which grabber is engaged (calibrate)
 DEBOUNCE = 200 #Debouncing delay for button(ms)
-JUNCTION_LOOPS=5 #Number of times a junction must be detected before it can be acted upon (calibrate)
-CLEAR_LOOPS=5 #Number of times outer sensors must be clear for before a new junction can be detected (Calibrate)
+JUNCTION_LOOPS=10 #Number of times a junction must be detected before it can be acted upon (calibrate)
+CLEAR_LOOPS=10 #Number of times outer sensors must be clear for before a new junction can be detected (Calibrate)
 TIMEOUT90=980 #ms for initial 90 degree turn (Calibrate)
 TIMEOUT_SPIN=1800 #ms for initial 180 degree turn (Calibrate)
-TIMEOUT_FORWARD=800 # time to move wheels forward onto junction for a turn
+TIMEOUT_FORWARD=1000 # time to move wheels forward onto junction for a turn
 
 ## Define states
 (IDLE, FOLLOW_LINE, AT_JUNCTION, REVERSING, TURNING, DETECTING_PACKAGE, GRABBING, RELEASING, PARKING)=range(9) #Possible states
-STATE_NAMES = ("IDLE", "FOLLOW_LINE", "AT_JUNCTION", "TURNING",
-               "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING")
+STATE_NAMES = ("IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
+               "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING")
 STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSING = range(8) #Possible route actions
 ## Define routes
-route=[STRAIGHT,RIGHT,STRAIGHT, RIGHT]
+route=[STRAIGHT,RIGHT, STRAIGHT]
 ## Set up robot
 class Robot:
     def __init__(self):
         ## Set up I/O components
-        self.lineSensFL=Pin(20, Pin.IN, Pin.PULL_DOWN)
-        self.lineSensML=Pin(22, Pin.IN, Pin.PULL_DOWN)
-        self.lineSensMR=Pin(26, Pin.IN, Pin.PULL_DOWN)
-        self.lineSensFR=Pin(16, Pin.IN, Pin.PULL_DOWN)
+        self.lineSensFL=Pin(20, Pin.IN, Pin.PULL_DOWN) #MR connection
+        self.lineSensML=Pin(22, Pin.IN, Pin.PULL_DOWN) #ML connection
+        self.lineSensMR=Pin(26, Pin.IN, Pin.PULL_DOWN) #FL connection
+        self.lineSensFR=Pin(16, Pin.IN, Pin.PULL_DOWN) #FR connection
         self.motorR=Motor(dirPin=4, PWMPin=5)
         self.motorL=Motor(dirPin=7, PWMPin=6)
         self.motorServo=None
         self.buttonSS=Pin(17, Pin.IN, Pin.PULL_DOWN)
-        self.LEDY=Pin(11, Pin.OUT) #LEDs
-        self.LEDR=Pin(10, Pin.OUT)
+        self.LEDY=Pin(10, Pin.OUT) #LEDs
+        self.LEDR=Pin(11, Pin.OUT) #NEED LEDY=11, LEDR=10 FOR ACTUAL RUN
         self.LEDG=Pin(12, Pin.OUT)
         #self.distanceSens=ToF()
         self.hallSens=None
@@ -184,12 +184,12 @@ class Robot:
         self.motorL.Forward(BASESPEED+self.steer)
         # Executed to perform decision making at junctions
     def run_at_junction(self):
-        self.route_step+=1
         if self.route_step==len(route):
             print("end route")
             self.change_state(IDLE)
         else:
             action=route[self.route_step]
+            self.route_step+=1
             self.act=False
             if action==STRAIGHT:
                 self.change_state(FOLLOW_LINE)
@@ -213,10 +213,10 @@ class Robot:
                     self.motorL.Reverse(BASESPEED)
                     self.motorR.Forward(BASESPEED)
         else:
-            ticks_diff(ticks_ms(),self.state_start)<TIMEOUT_FORWARD: #Moves forward until wheels are on the junction
-            self.run_move_straight()
+            if ticks_diff(ticks_ms(),self.state_start)<TIMEOUT_FORWARD: #Moves forward until wheels are on the junction
+                self.run_move_straight()
             if action==RIGHT: #Performs an initial timed right turn
-                if ticks_diff(ticks_ms(), self.state_start)TIMEOUT90:
+                if ticks_diff(ticks_ms(), self.state_start)<TIMEOUT90:
                     self.motorR.Reverse(BASESPEED)
                     self.motorL.Forward(BASESPEED)
             elif action==LEFT: #Performs an initial timed left turn
@@ -231,15 +231,15 @@ class Robot:
             finished_turning=True
         if turn_correctionFR==True: #If far right sensor is on, robot slowly turns until the middle left sensor is back on the line 
             if self.lineSensML.value()==0:
-                motorR.Reverse(SEARCH_SPEED)
-                motorL.Forward(SEARCH_SPEED)
-            elif self.lineSensML.value()==1
+                self.motorR.Reverse(SEARCHSPEED)
+                self.motorL.Forward(SEARCHSPEED)
+            elif self.lineSensML.value()==1:
                 turn_correctionFR=False
                 finished_turining=True
         elif turn_correctionFL==True: #If far left sensor is on, robot slowly turns until the middle right sensor is back on the line
             if self.lineSensMR.value()==0: 
-                motorR.Forward(SEARCH_SPEED)
-                motorL.Reverse(SEARCH_SPEED)
+                self.motorR.Forward(SEARCHSPEED)
+                self.motorL.Reverse(SEARCHSPEED)
             elif self.lineSensML.value()==1:
                 turn_correctionFL=False
                 finished_turning=True
