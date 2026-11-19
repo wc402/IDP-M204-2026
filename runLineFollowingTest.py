@@ -41,12 +41,12 @@ test4=[0,0,0,5]#turn to pickup
 test5=[0,0,0,0,0,5,7,9,1,0]#pickup and turn
 test6=[0,0,0,0,0,5,7,9,1,0,0,0,0]#pickup and turn and continue
 test7=[0,3,8,11,4,1,0,0]#dropoff and return
-test8=[0,4,0,0,0,0,0,0,0,5,7,9,1,0,0,0,0,0,3,8,11,0,1,0,1,0,0]#whole route
+test8=[0,4,0,0,0,0,0,0,0,5,7,9,1,0,0,0,0,0,3,8,11,4,1,0,1,0,0]#whole route
 test9=[0,0,0,0,0,5,7,9,1,0,0,0,0,0,0,0,1,0]#pickup and return
-
+test10=[0,0,5,7,9,1,0,3,8,11,4,1,0,0]
 
 #DONT LET TIMEOUT_DROP LET JUNCTION BE DETECTED
-follow_route(test6, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
+follow_route(test10, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
 
 #Number assignment (integers to avoid bugs)
 #0: straight ahead
@@ -60,3 +60,4 @@ follow_route(test6, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, moto
 #8: dropoff
 #9: 180 after pickup (follows 7)
 #10: return (same as 180 but doesn't need forced, since it reaches t-junction)
+#11: reverse
