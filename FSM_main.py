@@ -1,4 +1,4 @@
-from machine import Pin, PWM, ADC
+from machine import Pin, PWM, ADC, Timer
 from time import ticks_ms, ticks_diff
 from motor import Motor
 from distance_sensor import ToF
@@ -9,10 +9,10 @@ STEP=1
 MAXSTEER=20
 HALL_LIMIT=0 #Value above which a package is determined to contain a magnet(calibrate)
 HALL_DISTANCE=0#Distance at which Hall reading is taken (calibrate)
-GRAB_DISTANCE =0#Distance at which grabber is engaged (calibrate)
+GRAB_DISTANCE =0#Distance at which Hall reading is taken (calibrate)
 DEBOUNCE = 200 #Debouncing delay (ms)
-JUNCTION_LOOPS=10 #Number of times a junction must be detected before it can be acted upon (calibrate)
-CLEAR_LOOPS=10 #Number of times outer sensors must be clear for before a new junction can be detected (Calibrate)
+JUNCTION_LOOPS=5 #Number of times a junction must be detected before it can be acted upon (calibrate)
+CLEAR_LOOPS=5 #Number of times outer sensors must be clear for before a new junction can be detected (Calibrate)
 LEFT_TURN_TIMEOUT=950
 RIGHT_TURN_TIMEOUT=950
 SPIN_TIMEOUT=1900 #SPIN is a 180 degrees turn
@@ -38,7 +38,7 @@ class Robot:
         self.LEDY=Pin(11, Pin.OUT) #LEDs
         self.LEDR=Pin(10, Pin.OUT)
         self.LEDG=Pin(12, Pin.OUT)
-        self.distanceSens=ToF()
+        #self.distanceSens=ToF()
         self.hallSens=None
         self.IRSens=None
         self.torqueSens=None
@@ -61,6 +61,9 @@ class Robot:
         self.turn= LEFT #Default, can change
         self.carrying=False
         self.polarity=None
+        self.flashTimer=Timer()
+        self.yellowOn=False
+        self.lastprint=0
         
         ## Dictionary to match states to executable functions
         self.handlers = {
@@ -68,8 +71,8 @@ class Robot:
             FOLLOW_LINE: self.run_follow_line,
             AT_JUNCTION: self.run_at_junction,
             TURNING: self.run_turning,
-            DETECTING_PACKAGE: self.run_detecting,
-            GRABBING: self.run_grabbing,
+            #DETECTING_PACKAGE: self.run_detecting,
+            #GRABBING: self.run_grabbing,
             RELEASING: self.run_releasing,
             PARKING: self.run_parking}
         ## Add button and LED functionality (have flash at ~2Hz)
@@ -88,6 +91,16 @@ class Robot:
             #debounce button, set the stop flag, turn motors off
             #needs both start and stop functionality
             pass
+    def toggle_yellow(self, timer):
+        self.LEDY.toggle()
+    def set_yellow(self, on):
+        if on and not self.yellowOn:
+            self.flashTimer.init(freq=4, mode=Timer.PERIODIC, callback=self.toggle_yellow)
+            self.yellowOn=True
+        elif not on and self.yellowOn:
+            self.flashTimer.deinit()
+            self.yellowOn=False
+            self.LEDY.value(0)
     def change_state(self, new_state):
         self.state=new_state
         self.state_start=ticks_ms()
@@ -98,12 +111,12 @@ class Robot:
             self.motorL.off()
             self.steer, self.last_error, self.route_step, self.junction_count, self.clear_count, =0,0,0,0,0
             self.polarity=None
-            self.act, self.carrying = False
+            self.act, self.carrying = False, False
             self.turn=LEFT
-                ## Turn amber light off
+            self.set_yellow(False)
                 ## Reset route/route_step/flags when entering IDLE
         else:
-                #Keep flashing amber light
+            self.set_yellow(True)
             pass
         if new_state == FOLLOW_LINE:
             self.steer=0
@@ -122,15 +135,13 @@ class Robot:
         # Main function to run. Should not contain any sleeps/blockimg
     def run(self):
         while True:
-            if state is IDLE:
-                self.LEDY.value(1)
+            if ticks_diff(ticks_ms(), self.lastprint) > 200:
+                self.lastprint = ticks_ms()
+                print(self.lineSensFL.value(), self.lineSensML.value(),
+                      self.lineSensMR.value(), self.lineSensFR.value(),
+                      self.act, self.clear_count, self.junction_count)
             if self.stop and self.state is not IDLE: #Checks for an emergency stop
                 self.change_state(IDLE)
-            time_diff=ticks_diff(time_ms(), self.state_start())
-            if time_diff%500 == 0:
-                self.LEDY.value(1)
-            elif time_diff%500 == 0 and time_diff%1000 == 0:
-                self.LEDY.value(0)
             self.handlers[self.state]() #runs current state once
         # Executed when idle
     def run_idle(self):
@@ -143,7 +154,7 @@ class Robot:
             self.last_error=error
             self.steer-=error*STEP
         elif self.lineSensML.value()==0 and self.lineSensMR.value()==0: #Line lost (both sensors off)
-            self.steer+=last_error*STEP #Keep turn in the opposite direction as when a line last detected
+            self.steer+=self.last_error*STEP #Keep turn in the opposite direction as when a line last detected
         else: #Following line correctly, do nothing
             self.steer = 0
         if self.act:  
@@ -168,7 +179,7 @@ class Robot:
             self.last_error=error
             self.steer-=error*STEP
         elif self.lineSensML.value()==0 and self.lineSensMR.value()==0: #Line lost (both sensors off)
-            self.steer+=last_error*STEP #Keep turn in the opposite direction as when a line last detected
+            self.steer+=self.last_error*STEP #Keep turn in the opposite direction as when a line last detected
         else: #Following line correctly, do nothing
             self.steer = 0
         self.steer=max(-MAXSTEER, min(MAXSTEER, self.steer))
@@ -176,18 +187,22 @@ class Robot:
         self.motorL.Forward(BASESPEED+self.steer)
         # Executed to perform decision making at junctions
     def run_at_junction(self):
-        action=route[self.route_step]
         self.route_step+=1
-        self.act=False
-        if action==STRAIGHT:
-            self.change_state(FOLLOW_LINE)
-        elif action in (LEFT, RIGHT, SPIN):
-            self.turn=action
-            self.change_state(TURNING)
-        elif action == COLLECT:
-            self.change_state(DETECTING_PACKAGE)
-        elif action== PARK:
-            self.change_state(PARKING)
+        if self.route_step==len(route):
+            print("end route")
+            self.change_state(IDLE)
+        else:
+            action=route[self.route_step]
+            self.act=False
+            if action==STRAIGHT:
+                self.change_state(FOLLOW_LINE)
+            elif action in (LEFT, RIGHT, SPIN):
+                self.turn=action
+                self.change_state(TURNING)
+            elif action == COLLECT:
+                self.change_state(DETECTING_PACKAGE)
+            elif action== PARK:
+                self.change_state(PARKING)
         # Exectuted to perform turns
     def run_turning(self):
         finished_turning=False
@@ -195,7 +210,7 @@ class Robot:
         if self.route_step>len(route):
             self.change_state(IDLE)
         if ticks_diff(ticks_ms(),self.state_start)<500:
-            self.run_move_straight(self)
+            self.run_move_straight()
         else:
             if action==RIGHT:
                 if ticks_diff(ticks_ms(), self.state_start)<RIGHT_TURN_TIMEOUT:
@@ -224,27 +239,27 @@ class Robot:
                 elif action==PARK:
                     self.route_step+=1
                     self.change_state(PARKING)
-    def run_detecting(self):
-        if self.distanceSens.read_distance()<HALL_DISTANCE:
-            self.run_move_straight(self)
-        elif self.distanceSens.read_distance()>=HALL_DISTANCE:
-            self.motorR.off()
-            self.motorL.off()
-            if abs(self.hallSens.value())>HALL_LIMIT:
-                self.change_state(GRABBING)
-            else:
-                self.change_state(TURNING)
-    def run_grabbing(self):
-        if self.distanceSens.read_distance()<GRAB_DISTANCE:
-            self.run_move_straight(self)
-        elif self.distanceSens.read_distance()>=GRAB_DISTANCE:
+    #def run_detecting(self):
+     #   if self.distanceSens.read_distance()<HALL_DISTANCE:
+      #      self.run_move_straight()
+       # elif self.distanceSens.read_distance()>=HALL_DISTANCE:
+        #    self.motorR.off()
+         #   self.motorL.off()
+          #  if abs(self.hallSens.value())>HALL_LIMIT:
+           #     self.change_state(GRABBING)
+            #else:
+             #   self.change_state(TURNING)
+   # def run_grabbing(self):
+    #    if self.distanceSens.read_distance()<GRAB_DISTANCE:
+     #       self.run_move_straight()
+      #  elif self.distanceSens.read_distance()>=GRAB_DISTANCE:
             #Engage grabber-complete when more known
-            self.change_state(TURNING)
+       #     self.change_state(TURNING)
     def run_releasing(self):
         #Complete when more known
         #Will it be possible to spin here or is a reverse needed?
         pass
-    def run_parking(self)
+    def run_parking(self):
         #complete later
         pass
     ##Add flashing lights
