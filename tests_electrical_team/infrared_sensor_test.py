@@ -12,7 +12,7 @@
 #   - every quarter of a second the code reads the pin over and over
 #   - "pulses"  = how many times the output dropped from 1 to 0 in that time
 #   - "low for" = how long in total the output stayed at 0 in that time
-#   - if the output was 0 at any point, it prints "IR DETECTED",
+#   - if the output was 0 at any point, it prints "IR DETECTED",	
 #     otherwise it prints "no IR"
 
 from machine import Pin
