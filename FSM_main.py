@@ -22,7 +22,7 @@ STATE_NAMES = ("IDLE", "FOLLOW_LINE", "AT_JUNCTION", "TURNING",
                "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING")
 STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK = range(7) 
 ## Define routes
-route=[]
+route=[STRAIGHT,STRAIGHT,STRAIGHT]
 ## Set up robot
 class Robot:
     def __init__(self):
@@ -99,7 +99,7 @@ class Robot:
             self.steer, self.last_error, self.route_step, self.junction_count, self.clear_count, =0,0,0,0,0
             self.polarity=None
             self.act, self.carrying = False
-            self.turn="Left"
+            self.turn=LEFT
                 ## Turn amber light off
                 ## Reset route/route_step/flags when entering IDLE
         else:
@@ -122,8 +122,15 @@ class Robot:
         # Main function to run. Should not contain any sleeps/blockimg
     def run(self):
         while True:
+            if state is IDLE:
+                self.LEDY.value(1)
             if self.stop and self.state is not IDLE: #Checks for an emergency stop
                 self.change_state(IDLE)
+            time_diff=ticks_diff(time_ms(), self.state_start())
+            if time_diff%500 == 0:
+                self.LEDY.value(1)
+            elif time_diff%500 == 0 and time_diff%1000 == 0:
+                self.LEDY.value(0)
             self.handlers[self.state]() #runs current state once
         # Executed when idle
     def run_idle(self):
