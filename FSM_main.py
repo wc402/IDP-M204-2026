@@ -3,7 +3,7 @@ from time import ticks_ms, ticks_diff
 from motor import Motor
 from distance_sensor import ToF
 from hall_sensor import Hall, NORTH, SOUTH, NONE
-
+from servo_motor import servoMotor
 ## Calibration constants
 BASESPEED=70
 SEARCHSPEED=50
@@ -20,6 +20,21 @@ TIMEOUT90=980 #ms for initial 90 degree turn (Calibrate)
 TIMEOUT_SPIN=1800 #ms for initial 180 degree turn (Calibrate)
 TIMEOUT_FORWARD=600 # time to move wheels forward onto junction for a turn
 TIMEOUT_DETECTION=3000 #Timelimit for a detection
+
+SERVO_GRAB_CAL_TABLE = [
+    (0,   5332),
+    (27,  11897),
+    (54,  18960),
+    (81,  26003),
+    (108, 32781),
+    (135, 39680),
+    (162, 46165),
+    (189, 51563),
+    (216, 56142),
+    (243, 60008),
+    (270, 62970)
+]
+
 ## Define states
 (IDLE, FOLLOW_LINE, AT_JUNCTION, REVERSING, TURNING, DETECTING_PACKAGE, GRABBING, RELEASING, PARKING)=range(9) #Possible states
 STATE_NAMES = ("IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
@@ -37,10 +52,10 @@ class Robot:
         self.lineSensFR=Pin(16, Pin.IN, Pin.PULL_DOWN) #FR connection
         self.motorR=Motor(dirPin=4, PWMPin=5)
         self.motorL=Motor(dirPin=7, PWMPin=6)
-        self.motorServo=None
+        self.motorServoGrab=servoMotor(SERVO_GRAB_CAL_TABLE, 15, 27, SERVO_GRAB_OPEN_ANGLE)
         self.buttonSS=Pin(17, Pin.IN, Pin.PULL_DOWN)
-        self.LEDY=Pin(10, Pin.OUT) #LEDs
-        self.LEDR=Pin(11, Pin.OUT) #NEED LEDY=11, LEDR=10 FOR ACTUAL RUN
+        self.LEDY=Pin(11, Pin.OUT) #LEDs
+        self.LEDR=Pin(10, Pin.OUT) #NEED LEDY=11, LEDR=10 FOR ACTUAL RUN
         self.LEDG=Pin(12, Pin.OUT)
         self.distanceSens=ToF()
         self.hallSens=Hall(pin=28, threshold_mv=HALL_THRESHOLD)
@@ -77,9 +92,10 @@ class Robot:
             IDLE: self.run_idle,
             FOLLOW_LINE: self.run_follow_line,
             AT_JUNCTION: self.run_at_junction,
+            REVERSING: self.run_reversing
             TURNING: self.run_turning,
-            #DETECTING_PACKAGE: self.run_detecting,
-            #GRABBING: self.run_grabbing,
+            DETECTING_PACKAGE: self.run_detecting,
+            GRABBING: self.run_grabbing,
             RELEASING: self.run_releasing,
             PARKING: self.run_parking}
         ## Add button and LED functionality (have flash at ~2Hz)
@@ -195,6 +211,16 @@ class Robot:
         self.motorR.Forward(BASESPEED-self.steer)
         self.motorL.Forward(BASESPEED+self.steer)
         # Executed to perform decision making at junctions
+    def run_reversing(self):
+        error=self.lineSensML.value()-self.lineSensMR.value()
+        if error !=0:
+            self.lastError=error
+            self.steer-=error*STEP
+        else:
+            self.steer=0
+            self.steer=max(-MAXSTEER, min(MAXSTEER, self.steer))
+        self.motorR.Reverse(BASESPEED+self.steer)
+        self.motorL.Reverse(BASESPEED-self.steer)
     def run_at_junction(self):
         if self.route_step==len(route):
             self.change_state(IDLE)
@@ -289,14 +315,11 @@ class Robot:
         if self.distanceSens.read_distance()<GRAB_DISTANCE:
             self.run_move_straight()
         elif self.distanceSens.read_distance()>=GRAB_DISTANCE:
-            #Engage grabber-complete when more known
-           self.change_state(IDLE)
-           return
+            servoMotor.close_grabber()
+            self.change_state(TURNING)
     def run_releasing(self):
-        #Complete when more known
-        #Will it be possible to spin here or is a reverse needed?
-        #Need to turn off red/green LEDs
-        pass
+        servoMotor.open_grabber()
+        self.change_state(IDLE)
     def run_parking(self):
         #complete later
         self.change_state(IDLE)
