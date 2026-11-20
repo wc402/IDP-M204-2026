@@ -2,14 +2,16 @@ from machine import Pin, PWM, ADC, Timer
 from time import ticks_ms, ticks_diff
 from motor import Motor
 from distance_sensor import ToF
+from hall_sensor import Hall, NORTH, SOUTH, NONE
 
 ## Calibration constants
 BASESPEED=70
 SEARCHSPEED=50
 STEP=1 
 MAXSTEER=20
-HALL_LIMIT=0 #Value above which a package is determined to contain a magnet(calibrate)
+HALL_THRESHOLD=15 #Change in reading required for a magnet to be deemed present(mV, calibrate)
 HALL_DISTANCE=0#Distance at which Hall reading is taken (calibrate)
+HALL_SETTLE=100 #time delay before taking a hall sensor reading )(ms)
 GRAB_DISTANCE =50#Distance at which grabber is engaged (calibrate)
 DEBOUNCE = 500 #Debouncing delay for button(ms)
 JUNCTION_LOOPS=10 #Number of times a junction must be detected before it can be acted upon (calibrate)
@@ -17,14 +19,14 @@ CLEAR_LOOPS=10 #Number of times outer sensors must be clear for before a new jun
 TIMEOUT90=980 #ms for initial 90 degree turn (Calibrate)
 TIMEOUT_SPIN=1800 #ms for initial 180 degree turn (Calibrate)
 TIMEOUT_FORWARD=600 # time to move wheels forward onto junction for a turn
-
+TIMEOUT_DETECTION=3000 #Timelimit for a detection
 ## Define states
 (IDLE, FOLLOW_LINE, AT_JUNCTION, REVERSING, TURNING, DETECTING_PACKAGE, GRABBING, RELEASING, PARKING)=range(9) #Possible states
 STATE_NAMES = ("IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
                "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING")
 STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSING = range(8) #Possible route actions
 ## Define routes
-route=[STRAIGHT, STRAIGHT, RIGHT]
+route=[STRAIGHT, RIGHT, COLLECT]
 ## Set up robot
 class Robot:
     def __init__(self):
@@ -40,8 +42,8 @@ class Robot:
         self.LEDY=Pin(10, Pin.OUT) #LEDs
         self.LEDR=Pin(11, Pin.OUT) #NEED LEDY=11, LEDR=10 FOR ACTUAL RUN
         self.LEDG=Pin(12, Pin.OUT)
-        #self.distanceSens=ToF()
-        self.hallSens=None
+        self.distanceSens=ToF()
+        self.hallSens=Hall(pin=28, threshold_mv=HALL_THRESHOLD)
         self.IRSens=None
         self.buttonSS.irq(trigger=Pin.IRQ_RISING, handler=self.on_button)
         
@@ -145,6 +147,8 @@ class Robot:
         # Main function to run. Should not contain any sleeps/blockimg
     def run(self):
         while True:
+            if self.route_step==0:
+                Hall.calibrate_hallSens()
             if self.stop and self.state is not IDLE: #Checks for an emergency stop
                 self.change_state(IDLE)
             self.handlers[self.state]() #runs current state once
@@ -267,16 +271,20 @@ class Robot:
             elif action==PARK:
                 self.route_step+=1
                 self.change_state(PARKING)
-    #def run_detecting(self):
-     #   if self.distanceSens.read_distance()<HALL_DISTANCE:
-      #      self.run_move_straight()
-       # elif self.distanceSens.read_distance()>=HALL_DISTANCE:
-        #    self.motorR.off()
-         #   self.motorL.off()
-          #  if abs(self.hallSens.value())>HALL_LIMIT:
-           #     self.change_state(GRABBING)
-            #else:
-             #   self.change_state(TURNING)
+    def run_detecting(self):
+        if self.distanceSens.read_distance()<HALL_DISTANCE:
+            self.run_move_straight()
+        elif self.distanceSens.read_distance()>=HALL_DISTANCE:
+            self.motorR.off()
+            self.motorL.off()
+            hallSens_reading=Hall.package_polarity()
+            if hallSens_reading is NONE:
+                print("no magnet")
+            elif hallSens_reading is NORTH:
+                self.LEDR.value(1)
+                self.change_state(GRABBING)
+            elif hallSens_reading is SOUTH:
+                self.LEFL.value(1)
     def run_grabbing(self):
         if self.distanceSens.read_distance()<GRAB_DISTANCE:
             self.run_move_straight()
@@ -287,6 +295,7 @@ class Robot:
     def run_releasing(self):
         #Complete when more known
         #Will it be possible to spin here or is a reverse needed?
+        #Need to turn off red/green LEDs
         pass
     def run_parking(self):
         #complete later
