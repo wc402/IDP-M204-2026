@@ -2,21 +2,21 @@ from machine import Pin, PWM, ADC, Timer
 from time import ticks_ms, ticks_diff
 from motor import Motor
 from distance_sensor import ToF
-from hall_sensor import Hall, NORTH, SOUTH, NONE
+from hall_sensor import hallSens, NORTH, SOUTH, NONE
 from servo_motor import servoMotor
 ## Calibration constants
 BASESPEED=70
 SEARCHSPEED=50
 STEP=1 
 MAXSTEER=20
-HALL_THRESHOLD=15 #Change in reading required for a magnet to be deemed present(mV, calibrate)
+HALL_THRESHOLD=15 #Change in reading required for a magnet to be deemed present(mV, )
 HALL_DISTANCE=0#Distance at which Hall reading is taken (calibrate)
 HALL_SETTLE=100 #time delay before taking a hall sensor reading )(ms)
 GRAB_DISTANCE =50#Distance at which grabber is engaged (calibrate)
 DEBOUNCE = 500 #Debouncing delay for button(ms)
 JUNCTION_LOOPS=10 #Number of times a junction must be detected before it can be acted upon (calibrate)
 CLEAR_LOOPS=10 #Number of times outer sensors must be clear for before a new junction can be detected (Calibrate)
-TIMEOUT90=980 #ms for initial 90 degree turn (Calibrate)
+TIMEOUT90=900 #ms for initial 90 degree turn (Calibrate)
 TIMEOUT_SPIN=1800 #ms for initial 180 degree turn (Calibrate)
 TIMEOUT_FORWARD=600 # time to move wheels forward onto junction for a turn
 TIMEOUT_DETECTION=3000 #Timelimit for a detection
@@ -41,7 +41,7 @@ STATE_NAMES = ("IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
                "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING")
 STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSING = range(8) #Possible route actions
 ## Define routes
-route=[STRAIGHT, RIGHT, COLLECT]
+route=[COLLECT]
 ## Set up robot
 class Robot:
     def __init__(self):
@@ -52,13 +52,13 @@ class Robot:
         self.lineSensFR=Pin(16, Pin.IN, Pin.PULL_DOWN) #FR connection
         self.motorR=Motor(dirPin=4, PWMPin=5)
         self.motorL=Motor(dirPin=7, PWMPin=6)
-        self.motorServoGrab=servoMotor(SERVO_GRAB_CAL_TABLE, 15, 27, SERVO_GRAB_OPEN_ANGLE)
+        self.motorServoGrab=servoMotor(SERVO_GRAB_CAL_TABLE, 15, 27)
         self.buttonSS=Pin(17, Pin.IN, Pin.PULL_DOWN)
         self.LEDY=Pin(11, Pin.OUT) #LEDs
         self.LEDR=Pin(10, Pin.OUT) #NEED LEDY=11, LEDR=10 FOR ACTUAL RUN
         self.LEDG=Pin(12, Pin.OUT)
-        self.distanceSens=ToF()
-        self.hallSens=Hall(pin=28, threshold_mv=HALL_THRESHOLD)
+        #self.distanceSens=ToF()
+        #self.hallSens=hallSens(pin=28, threshold_mv=HALL_THRESHOLD)
         self.IRSens=None
         self.buttonSS.irq(trigger=Pin.IRQ_RISING, handler=self.on_button)
         
@@ -92,7 +92,7 @@ class Robot:
             IDLE: self.run_idle,
             FOLLOW_LINE: self.run_follow_line,
             AT_JUNCTION: self.run_at_junction,
-            REVERSING: self.run_reversing
+            REVERSING: self.run_reversing,
             TURNING: self.run_turning,
             DETECTING_PACKAGE: self.run_detecting,
             GRABBING: self.run_grabbing,
@@ -163,8 +163,8 @@ class Robot:
         # Main function to run. Should not contain any sleeps/blockimg
     def run(self):
         while True:
-            if self.route_step==0:
-                Hall.calibrate_hallSens()
+            #if self.route_step==0:
+                #hallSens.calibrate_hallSens()
             if self.stop and self.state is not IDLE: #Checks for an emergency stop
                 self.change_state(IDLE)
             self.handlers[self.state]() #runs current state once
@@ -273,7 +273,7 @@ class Robot:
                 self.motorL.Forward(SEARCHSPEED)
             elif self.lineSensML.value()==1:
                 self.turn_correctionFR=False
-                self.finished_turining=True
+                self.finished_turning=True
         elif self.turn_correctionFL==True: #If far left sensor is on, robot slowly turns until the middle right sensor is back on the line
             if self.lineSensMR.value()==0: 
                 self.motorR.Forward(SEARCHSPEED)
@@ -298,27 +298,31 @@ class Robot:
                 self.route_step+=1
                 self.change_state(PARKING)
     def run_detecting(self):
-        if self.distanceSens.read_distance()<HALL_DISTANCE:
-            self.run_move_straight()
-        elif self.distanceSens.read_distance()>=HALL_DISTANCE:
-            self.motorR.off()
-            self.motorL.off()
-            hallSens_reading=Hall.package_polarity()
-            if hallSens_reading is NONE:
-                print("no magnet")
-            elif hallSens_reading is NORTH:
-                self.LEDR.value(1)
-                self.change_state(GRABBING)
-            elif hallSens_reading is SOUTH:
-                self.LEFL.value(1)
+        #if self.distanceSens.read_distance()<HALL_DISTANCE:
+         #   self.run_move_straight()
+        #elif self.distanceSens.read_distance()>=HALL_DISTANCE:
+         #   self.motorR.off()
+          #  self.motorL.off()
+           # hallSens_reading=hallSens.package_polarity()
+            #if hallSens_reading is NONE:
+             #   print("no magnet")
+            #elif hallSens_reading is NORTH:
+             #   self.LEDR.value(1)
+              #  self.change_state(GRABBING)
+            #elif hallSens_reading is SOUTH:
+             #   self.LEFL.value(1)
+        self.change_state(GRABBING)
     def run_grabbing(self):
-        if self.distanceSens.read_distance()<GRAB_DISTANCE:
+        #if self.distanceSens.read_distance()<GRAB_DISTANCE:
+        if ticks_diff(ticks_ms(), self.state_start)<5:
             self.run_move_straight()
-        elif self.distanceSens.read_distance()>=GRAB_DISTANCE:
-            servoMotor.close_grabber()
+            print("forwards")
+        #elif self.distanceSens.read_distance()>=GRAB_DISTANCE:
+        else:
+            self.motorServoGrab.close_grabber()
             self.change_state(TURNING)
     def run_releasing(self):
-        servoMotor.open_grabber()
+        self.motorServoGrab.open_grabber()
         self.change_state(IDLE)
     def run_parking(self):
         #complete later
@@ -338,5 +342,7 @@ if __name__=="__main__":
         
         
         
+
+
 
 
