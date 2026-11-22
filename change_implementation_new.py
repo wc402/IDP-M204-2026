@@ -6,6 +6,7 @@ import grabber_program
 
 def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP):
     
+    grabber_program.open_grabber() #start with grabber open
     length = len(route)
     x=0
     
@@ -42,8 +43,10 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
             elif route[x] == 7: #pickup (forced change)
                 steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
                 print('Pickup')
-                t0=ticks_ms()
-                while ticks_diff(ticks_ms(), t0)<TIMEOUT[3]: #TIMEOUT[3] is time to reach pickup bay w/o detections
+                
+                #TOF METHOD
+                #t0=ticks_ms()
+                #while ticks_diff(ticks_ms(), t0)<TIMEOUT[3]: #TIMEOUT[3] is time to reach pickup bay w/o detections
                     #distance = tof.read()
                     #print("Distance:", distance, "mm")
                     #if distance is None or distance <= 0:
@@ -56,11 +59,13 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                     #    break
                     #steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
                     
-                    #TIMER METHOD UNTIL TOF FIXED
-                    steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
+                #TIMER METHOD (TOF FIXED)
+                steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT[3], steer, lastError, STEP)
+                
                 motorR.off()
                 motorL.off()
                 grabber_program.close_grabber()
+                
             elif route[x] == 8: #dropoff
                 print('Dropoff')
                 motorR.off()
@@ -74,7 +79,7 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 print('Spin 180')
             elif route[x] == 11: #reverse
                 print('Reverse')
-                while lineSensFL.value() != 1 or lineSensFR.value() != 1:
+                while lineSensFL.value() != 1 and lineSensFR.value() != 1: #until both outer sensors are on junction
                     steer, lastError = direction_control.reverse(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
             else:
                 print('Invalid route number?? ', route[x])

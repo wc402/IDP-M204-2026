@@ -34,18 +34,10 @@ motorL=Motor(dirPin=7, PWMPin=6) #Connects to left wheel (dir/pwm swapped here)
 #Timeout list
 TIMEOUT = [TIMEOUT_STRAIGHT, TIMEOUT_90, TIMEOUT_180, TIMEOUT_PICK, TIMEOUT_DROP, TIMEOUT_JUNCTION, TIMEOUT_STRAIGHT_AFTER_TURNING]
 ## Route for line following test
-test1=[0,0,0] #straight line
-test2=[0,4] #first right turn
-test3=[0,4,0,0,0]#from start to before pickup
-test4=[0,0,0,5]#turn to pickup
-test5=[0,0,0,0,0,5,7,9,1,0]#pickup and turn
-test6=[0,0,0,0,0,5,7,9,1,0,0,0,0]#pickup and turn and continue
-test7=[0,3,8,11,4,1,0,0]#dropoff and return
-test8=[0,4,0,0,0,0,0,0,0,5,7,9,1,0,0,0,0,0,3,8,11,4,1,0,1,0,0]#whole route
-test9=[0,0,0,0,0,5,7,9,1,0,0,0,0,0,0,0,1,0]#pickup and return
-test10=[5,7,9,1,0] #PICKUP TEST (closest bay)
-test11 =[3,8,11,4,1] #DROPOFF TEST (closest area)
-test12=[7,9]
+
+test1=[5,7,9,1,0] #PICKUP TEST (closest bay)
+test2=[0,3,8,11,4,1,0] #DROPOFF TEST (closest area)
+test3=[7,9,8]
 
 buttonSS = Pin(17, Pin.IN, Pin.PULL_DOWN)
 
@@ -53,7 +45,7 @@ while buttonSS.value() == 0:
     pass
 print("Button pressed! Starting program.")
 
-follow_route(test12, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
+follow_route(test3, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
 
 #Number assignment (integers to avoid bugs)
 #0: straight ahead
