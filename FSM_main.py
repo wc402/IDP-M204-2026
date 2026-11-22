@@ -86,6 +86,7 @@ class Robot:
         self.finished_timed_turn=False
         self.turn_correctionFR=False
         self.turn_correctionFL=False
+        self.grabbing=False
         
         ## Dictionary to match states to executable functions
         self.handlers = {
@@ -154,6 +155,7 @@ class Robot:
             self.turn_correctionFR=False
             self.turn_correctionFL=False
         elif new_state== GRABBING:
+            self.grabbing=False
             pass #start engaging grabber
         elif new_state==RELEASING:
             pass #start opening grabber
@@ -314,11 +316,16 @@ class Robot:
         self.change_state(GRABBING)
     def run_grabbing(self):
         #if self.distanceSens.read_distance()<GRAB_DISTANCE:
-        if ticks_diff(ticks_ms(), self.state_start)<5:
+        if ticks_diff(ticks_ms(), self.state_start)<1:
             self.run_move_straight()
             print("forwards")
         #elif self.distanceSens.read_distance()>=GRAB_DISTANCE:
         else:
+            self.grabbing==True
+        if self.grabbing:
+            print("grabbing")
+            self.motorR.off()
+            self.motorL.off()
             self.motorServoGrab.close_grabber()
             self.change_state(TURNING)
     def run_releasing(self):
@@ -342,6 +349,7 @@ if __name__=="__main__":
         
         
         
+
 
 
 
