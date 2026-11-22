@@ -47,7 +47,12 @@ test10=[5,7,9,1,0] #PICKUP TEST (closest bay)
 test11 =[3,8,11,4,1] #DROPOFF TEST (closest area)
 test12=[7,9]
 
-#DONT LET TIMEOUT_DROP LET JUNCTION BE DETECTED
+buttonSS = Pin(17, Pin.IN, Pin.PULL_DOWN)
+
+while buttonSS.value() == 0:
+    pass
+print("Button pressed! Starting program.")
+
 follow_route(test12, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
 
 #Number assignment (integers to avoid bugs)
