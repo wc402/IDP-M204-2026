@@ -97,7 +97,7 @@ def read_servo_angle():
 
 # ---------------- GRABBER FUNCTIONS ----------------
 
-def close_grabber():
+def close_grabber(CLOSED_ANGLE):
 
     print("Closing grabber - gripping box")
 
@@ -110,7 +110,7 @@ def close_grabber():
     print("Grabber angle:", round(actual_angle, 2))
 
 
-def open_grabber():
+def open_grabber(OPEN_ANGLE):
 
     print("Opening grabber - dropping box")
 
@@ -125,13 +125,13 @@ def open_grabber():
 
 # ---------------- MAIN PROGRAM ----------------
 
-while True:
-    choice = input("grab or drop")
-    if choice == 'grab':
-        close_grabber()
-        sleep(2)
-    elif choice == 'drop':
-        open_grabber()
-        sleep(2)
-    else:
-        print('invalid')
+#while True:
+#    choice = input("grab or drop")
+#    if choice == 'grab':
+#        close_grabber()
+#        sleep(2)
+#    elif choice == 'drop':
+#        open_grabber()
+#        sleep(2)
+#    else:
+#        print('invalid')

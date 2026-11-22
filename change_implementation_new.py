@@ -1,6 +1,7 @@
 from change_detection import make_change, is_clear_detected
 import direction_control
 from time import sleep, ticks_ms, ticks_diff
+import grabber_program
 
 
 def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP):
@@ -20,21 +21,6 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
             elif route[x] == 2: #left turn, pickup
                 steer, lastError = direction_control.turn('Left', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
                 print('Left')
-                #proceed straight line for time_pick
-                #print('Continue till pickup bay')
-                #t0=0
-                #while time_of_flight doesn't pick smt up
-                #    if ticks_diff(ticks_ms(), t0)<time:
-                #       steer, lastError = straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
-                #    else: reached pickup zone without detecting
-                #        break
-                #motorR.off()
-                #motorL.off()
-                
-                steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT[3], steer, lastError, STEP)
-                motorR.off()
-                motorL.off()
-                    
             elif route[x] == 3: #left turn, dropoff
                 print('Left')
                 steer, lastError = direction_control.turn('Left', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
@@ -45,23 +31,8 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 steer, lastError = direction_control.turn('Right', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
                 print('Right')
             elif route[x] == 5: #right turn, pickup
-                print('Right')
                 steer, lastError = direction_control.turn('Right', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
-                #proceed straight line for time_pick
-                #print('Continue till pickup bay')
-                #t0=0
-                #while time_of_flight.value() < distance needed to start pickup:
-                #    if ticks_diff(ticks_ms(), t0)<time to get closest to pickup:
-                #       steer, lastError = straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
-                #    else: reached closest to pickup zone without detecting
-                #        break
-                #motorR.off()
-                #motorL.off()
-                
-                steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT[3], steer, lastError, STEP)
-                motorR.off()
-                motorL.off()
-                
+                print('Right')
             elif route[x] == 6: #right turn, dropoff
                 steer, lastError = direction_control.turn('Right', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
                 print('Right')
@@ -69,20 +40,28 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 print('Continue till dropoff area')
                 steer, lastError = direction_control.keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, TIMEOUT[4], steer, lastError, STEP)
             elif route[x] == 7: #pickup (forced change)
-                #hall sensor stuff
-                #stop motors for 3 seconds
-                motorR.off()
-                motorL.off()
+                steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
                 print('Pickup')
-                #actual pickup function
-                sleep(3)
-            elif route[x] == 8: #dropoff
-                #stop motors for 3 seconds
+                t0=ticks_ms()
+                while ticks_diff(ticks_ms(), t0)<TIMEOUT[3]: #TIMEOUT[3] is time to reach pickup bay w/o detections
+                    distance = tof.read()
+                    print("Distance:", distance, "mm")
+                    if distance is None or distance <= 0:
+                        print("Invalid reading - continuing")
+                    elif distance <= 500: #calibrate 500 to distance required for pickup
+                        print("Package detected!")
+                        motorR.off()
+                        motorL.off()
+                        grabber_program.close_grabber(CLOSED_ANGLE)
+                        break
+                    steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
                 motorR.off()
                 motorL.off()
+            elif route[x] == 8: #dropoff
                 print('Dropoff')
-                #actual dropoff function
-                sleep(3)
+                motorR.off()
+                motorL.off()
+                grabber_program.open_grabber(OPEN_ANGLE)
             elif route[x] == 9: #turn180 (forced change)
                 steer, lastError = direction_control.turn180('Left', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
                 print('Spin 180')
