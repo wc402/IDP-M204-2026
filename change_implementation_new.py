@@ -44,24 +44,28 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 print('Pickup')
                 t0=ticks_ms()
                 while ticks_diff(ticks_ms(), t0)<TIMEOUT[3]: #TIMEOUT[3] is time to reach pickup bay w/o detections
-                    distance = tof.read()
-                    print("Distance:", distance, "mm")
-                    if distance is None or distance <= 0:
-                        print("Invalid reading - continuing")
-                    elif distance <= 500: #calibrate 500 to distance required for pickup
-                        print("Package detected!")
-                        motorR.off()
-                        motorL.off()
-                        grabber_program.close_grabber(CLOSED_ANGLE)
-                        break
+                    #distance = tof.read()
+                    #print("Distance:", distance, "mm")
+                    #if distance is None or distance <= 0:
+                    #    print("Invalid reading - continuing")
+                    #elif distance <= 500: #calibrate 500 to distance required for pickup
+                    #    print("Package detected!")
+                    #    motorR.off()
+                    #    motorL.off()
+                    #    grabber_program.close_grabber(CLOSED_ANGLE)
+                    #    break
+                    #steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
+                    
+                    #TIMER METHOD UNTIL TOF FIXED
                     steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
                 motorR.off()
                 motorL.off()
+                grabber_program.close_grabber()
             elif route[x] == 8: #dropoff
                 print('Dropoff')
                 motorR.off()
                 motorL.off()
-                grabber_program.open_grabber(OPEN_ANGLE)
+                grabber_program.open_grabber()
             elif route[x] == 9: #turn180 (forced change)
                 steer, lastError = direction_control.turn180('Left', lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
                 print('Spin 180')

@@ -97,7 +97,7 @@ def read_servo_angle():
 
 # ---------------- GRABBER FUNCTIONS ----------------
 
-def close_grabber(CLOSED_ANGLE):
+def close_grabber():
 
     print("Closing grabber - gripping box")
 
@@ -110,7 +110,7 @@ def close_grabber(CLOSED_ANGLE):
     print("Grabber angle:", round(actual_angle, 2))
 
 
-def open_grabber(OPEN_ANGLE):
+def open_grabber():
 
     print("Opening grabber - dropping box")
 

@@ -45,9 +45,10 @@ test8=[0,4,0,0,0,0,0,0,0,5,7,9,1,0,0,0,0,0,3,8,11,4,1,0,1,0,0]#whole route
 test9=[0,0,0,0,0,5,7,9,1,0,0,0,0,0,0,0,1,0]#pickup and return
 test10=[5,7,9,1,0] #PICKUP TEST (closest bay)
 test11 =[3,8,11,4,1] #DROPOFF TEST (closest area)
+test12=[7,9]
 
 #DONT LET TIMEOUT_DROP LET JUNCTION BE DETECTED
-follow_route(test10, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
+follow_route(test12, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
 
 #Number assignment (integers to avoid bugs)
 #0: straight ahead
