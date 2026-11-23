@@ -69,6 +69,8 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 while ticks_diff(ticks_ms(), t0)<800: #ADJUST 800 FOR TIME TO REVERSE OUT OF PICKUPBAY
                     steer, lastError = direction_control.reverse(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
             elif route[x] == 8: #dropoff
+                while ticks_diff(ticks_ms(), t0)<500: #ADJUST 500 FOR TIME TO REVERSE OUT OF DROPOFFAREA
+                    steer, lastError = direction_control.reverse(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
                 print('Dropoff')
                 motorR.off()
                 motorL.off()
@@ -83,6 +85,8 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 print('Reverse')
                 while lineSensFL.value() != 1 and lineSensFR.value() != 1: #until both outer sensors are on junction
                     steer, lastError = direction_control.reverse(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
+                #while ticks_diff(ticks_ms(), t0)<500: #ADJUST for wheels on junction after reverse?
+                #   steer, lastError = direction_control.straight(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
             else:
                 print('Invalid route number?? ', route[x])
             
