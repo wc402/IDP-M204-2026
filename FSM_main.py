@@ -36,12 +36,12 @@ SERVO_GRAB_CAL_TABLE = [
 ]
 
 ## Define states
-(IDLE, FOLLOW_LINE, AT_JUNCTION, REVERSING, TURNING, DETECTING_PACKAGE, GRABBING, RELEASING, PARKING)=range(9) #Possible states
-STATE_NAMES = ("IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
+(STOPPED, IDLE, FOLLOW_LINE, AT_JUNCTION, REVERSING, TURNING, DETECTING_PACKAGE, GRABBING, RELEASING, PARKING)=range(10) #Possible states
+STATE_NAMES = ("STOPPED", "IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
                "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING")
-STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSING = range(8) #Possible route actions
+STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSE = range(8) #Possible route actions
 ## Define routes
-route=[COLLECT,DROP]
+route=[COLLECT, STRAIGHT, LEFT]
 ## Set up robot
 class Robot:
     def __init__(self):
@@ -69,9 +69,8 @@ class Robot:
         self.last_error = 0
         self.state=IDLE
         self.state_start=ticks_ms() #Will be used to determine time elapsed in each state
-        self.stop= True #Triggered by the start/stop button
+        self.pressed= False #Triggered by the start/stop button
         self.last_press=0 # For debouncing
-        self.reset = False #Has the AGV reset itself after entering IDLE/STOPPED
         self.route_step=0
         self.junction_count=0 # Used to ensure a junction has been detected mutliple times before it is acted on
         self.clear_count=0 #Used to ensure the AGV has passed a junction before it can act on another
@@ -90,6 +89,7 @@ class Robot:
         
         ## Dictionary to match states to executable functions
         self.handlers = {
+            STOPPED: self.run_stopped
             IDLE: self.run_idle,
             FOLLOW_LINE: self.run_follow_line,
             AT_JUNCTION: self.run_at_junction,
@@ -106,15 +106,10 @@ class Robot:
         if ticks_diff(now, self.last_press) < DEBOUNCE:
             return
         self.last_press=now
-        if self.state is IDLE:
-            self.stop=False
-        else:
+        if self.state != IDLE and self.state != STOPPED:
             self.motorR.off()
             self.motorL.off()
-            self.stop=True
-            #debounce button, set the stop flag, turn motors off
-            #needs both start and stop functionality
-            pass
+        self.pressed=True
     def toggle_yellow(self, timer):
         self.LEDY.toggle()
     def set_yellow(self, on):
@@ -129,7 +124,11 @@ class Robot:
         self.state=new_state
         self.state_start=ticks_ms()
         print("Now " + STATE_NAMES[new_state])
-            
+        if new_state==STOPPED:
+            self.motorR.off()
+            self.motorL.off()
+            self.set_yellow(False)
+            self.LEDY.value(1)
         if new_state== IDLE:
             self.motorR.off()
             self.motorL.off()
@@ -138,7 +137,7 @@ class Robot:
             self.act, self.carrying = False, False
             self.turn=LEFT
             self.set_yellow(False)
-                ## Reset route/route_step/flags when entering IDLE
+            self.LEDY.value(1)            
         else:
             self.set_yellow(True)
             pass
@@ -162,17 +161,27 @@ class Robot:
      #   if ticks_diff(ticks_ms(), self.state_start)>limit_ms:
       #      self.change_state(IDLE)
         # Main function to run. Should not contain any sleeps/blockimg
+    def handle_button(self):
+        if not self.pressed:
+            return
+    self.pressed=False
+    if self.state == IDLE:
+        self.change_state(AT_JUNCTION)
+    elif self.state == STOPPED:
+        self.change_state(IDLE)
+    else:
+        self.change_state(STOPPED)
     def run(self):
         while True:
             #if self.route_step==0:
                 #hallSens.calibrate_hallSens()
-            if self.stop and self.state is not IDLE: #Checks for an emergency stop
-                self.change_state(IDLE)
+            self.handle_button()
             self.handlers[self.state]() #runs current state once
         # Executed when idle
+    def run_stopped(self):
+        pass
     def run_idle(self):
-        if self.stop==False:
-            self.change_state(AT_JUNCTION)
+        pass
         # Executed to follow a straight line
     def run_follow_line(self): #Junction decision making has changed, straight line following has not
         error= self.lineSensML.value()-self.lineSensMR.value()
@@ -224,7 +233,7 @@ class Robot:
         self.motorL.Reverse(BASESPEED-self.steer)
     def run_at_junction(self):
         if self.route_step==len(route):
-            self.change_state(IDLE)
+            self.change_state(STOPPED)
         else:
             action=route[self.route_step]
             self.route_step+=1
@@ -286,7 +295,7 @@ class Robot:
                 self.finished_turning=True
         if self.finished_turning: #Once finished turning, moves into the next required state
             if self.route_step+1>=len(route):
-                self.change_state(IDLE)
+                self.change_state(STOPPED)
                 return
             action=route[self.route_step]
             if action==STRAIGHT:
@@ -318,7 +327,7 @@ class Robot:
         self.change_state(GRABBING)
     def run_grabbing(self):
         #if self.distanceSens.read_distance()<GRAB_DISTANCE:
-        if self.grabbing == False and ticks_diff(ticks_ms(), self.state_start)<2300:
+        if self.grabbing == False and ticks_diff(ticks_ms(), self.state_start)<2500:
             self.run_move_straight()
         #elif self.distanceSens.read_distance()>=GRAB_DISTANCE:
         elif self.grabbing == False:
@@ -334,10 +343,10 @@ class Robot:
     def run_releasing(self):
         print('calling drop')
         self.motorServoGrab.open_grabber()
-        self.change_state(IDLE)
+        self.change_states(STOPPED)
     def run_parking(self):
         #complete later
-        self.change_state(IDLE)
+        self.change_state(STOPPED)
         return
     ##Add flashing lights
 if __name__=="__main__":
@@ -353,6 +362,7 @@ if __name__=="__main__":
         
         
         
+
 
 
 
