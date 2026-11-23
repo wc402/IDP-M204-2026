@@ -41,7 +41,7 @@ STATE_NAMES = ("IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
                "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING")
 STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSING = range(8) #Possible route actions
 ## Define routes
-route=[COLLECT]
+route=[COLLECT, STRAIGHT, LEFT]
 ## Set up robot
 class Robot:
     def __init__(self):
@@ -316,17 +316,18 @@ class Robot:
         self.change_state(GRABBING)
     def run_grabbing(self):
         #if self.distanceSens.read_distance()<GRAB_DISTANCE:
-        if ticks_diff(ticks_ms(), self.state_start)<1:
+        if self.grabbing == False and ticks_diff(ticks_ms(), self.state_start)<2500:
             self.run_move_straight()
-            print("forwards")
         #elif self.distanceSens.read_distance()>=GRAB_DISTANCE:
-        else:
-            self.grabbing==True
-        if self.grabbing:
-            print("grabbing")
+        elif self.grabbing == False:
             self.motorR.off()
             self.motorL.off()
+            self.grabbing=True
+            self.state_start=ticks_ms()
+        if self.grabbing and ticks_diff(ticks_ms(), self.state_start)<2000:
             self.motorServoGrab.close_grabber()
+        elif self.grabbing:
+            self.turn=SPIN
             self.change_state(TURNING)
     def run_releasing(self):
         self.motorServoGrab.open_grabber()
@@ -349,6 +350,9 @@ if __name__=="__main__":
         
         
         
+
+
+
 
 
 

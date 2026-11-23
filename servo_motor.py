@@ -5,7 +5,7 @@ MIN_DUTY=1638
 MAX_DUTY=8192
 
 class servoMotor:
-    def __init__(self, cal_table, servo_pin, feedback_pin, start_angle=0):
+    def __init__(self, cal_table, servo_pin, feedback_pin, start_angle=180):
         self.pwm=PWM(Pin(servo_pin))
         self.pwm.freq(50)
         self.adc=ADC(Pin(feedback_pin))
@@ -14,7 +14,7 @@ class servoMotor:
         self.target=start_angle
         self.min_angle=0
         self.max_angle=270
-        self.open_angle=270
+        self.open_angle=180
         self.closed_angle=0
         self.min_pulse=500
         self.max_pulse=2500
@@ -44,7 +44,8 @@ class servoMotor:
         else:
             angle0,adc0=self.table[-2]
             angle1, adc1=self.table[-1]
-        return angle0 + ((adc_value - adc0) / (adc1 - adc0)) * (angle1 - angle0)
+            angle= angle0 + ((adc_value - adc0) / (adc1 - adc0)) * (angle1 - angle0)
+            return max(self.min_angle, min(self.max_angle, angle))
     def close_grabber(self):
         self.set_angle(self.closed_angle)
     def open_grabber(self):
@@ -52,3 +53,4 @@ class servoMotor:
         
             
         
+
