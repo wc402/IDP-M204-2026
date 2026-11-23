@@ -46,6 +46,7 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 
                 #TOF METHOD
                 #t0=ticks_ms()
+                #Change to SEARCH_SPEED
                 #while ticks_diff(ticks_ms(), t0)<TIMEOUT[3]: #TIMEOUT[3] is time to reach pickup bay w/o detections
                     #distance = tof.read()
                     #print("Distance:", distance, "mm")
