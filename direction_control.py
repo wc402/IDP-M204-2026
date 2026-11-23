@@ -90,18 +90,30 @@ def keep_going(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, time
 def keep_turning(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, SEARCH_SPEED):
     if direction == 'Right':
         if lineSensFR.value()==1: #not turned enough
+            print('not turned enough')
             while lineSensML.value()==0: #turn right until get middle sensor back on line
                 motorR.Reverse(SEARCH_SPEED)
                 motorL.Forward(SEARCH_SPEED)
+        #elif lineSensFL.value()==0 and lineSensFR.value()==0: #line stuck between two sensors, no sensors on
+        #    print('stuck')
+        #    while lineSensML.value()==0: #turn right until get middle sensor back on line
+        #        motorR.Reverse(SEARCH_SPEED)
+        #        motorL.Forward(SEARCH_SPEED)
         elif lineSensFL.value()==1: #turned too much
+            print('turned too much')
             while lineSensMR.value()==0: #turn left until get middle sensor back on line
                 motorR.Forward(SEARCH_SPEED)
                 motorL.Reverse(SEARCH_SPEED)
+            
     elif direction == 'Left':
         if lineSensFL.value()==1: #not turned enough
             while lineSensMR.value()==0: #turn left until get middle sensor back on line
                 motorL.Reverse(SEARCH_SPEED)
                 motorR.Forward(SEARCH_SPEED)
+        #elif lineSensFL.value()==0 and lineSensFR.value()==0: #line stuck between two sensors, no sensors on
+        #    while lineSensMR.value()==0: #turn left until get middle sensor back on line
+        #        motorL.Reverse(SEARCH_SPEED)
+        #        motorR.Forward(SEARCH_SPEED)
         elif lineSensFR.value()==1: #turned too much
             while lineSensML.value()==0: #turn right until get middle sensor back on line
                 motorL.Forward(SEARCH_SPEED)
@@ -109,6 +121,7 @@ def keep_turning(direction, lineSensFL, lineSensML, lineSensMR, lineSensFR, moto
     #problem: if ML or MR never lights up, will be stuck in infinite loop
     #problem: if both FL and FR are on, only executes first of if else statement
     #problem: if both F and M sensors are on, what happens?
+    #problem: if stuck between second F and R, what happens?
     
     
 def reverse(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP):
@@ -127,3 +140,6 @@ def reverse(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, 
     motorL.Reverse(BASESPEED-steer)
     return steer, lastError
     
+
+
+

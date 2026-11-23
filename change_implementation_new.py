@@ -65,7 +65,9 @@ def follow_route(route, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, 
                 motorR.off()
                 motorL.off()
                 grabber_program.close_grabber()
-                
+                t0=ticks_ms()
+                while ticks_diff(ticks_ms(), t0)<800: #ADJUST 800 FOR TIME TO REVERSE OUT OF PICKUPBAY
+                    steer, lastError = direction_control.reverse(lineSensML, lineSensMR, motorR, motorL, MAXSTEER, BASESPEED, steer, lastError, STEP)
             elif route[x] == 8: #dropoff
                 print('Dropoff')
                 motorR.off()
