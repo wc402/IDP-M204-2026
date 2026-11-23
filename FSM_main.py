@@ -155,8 +155,9 @@ class Robot:
             self.turn_correctionFL=False
         elif new_state== GRABBING:
             self.grabbing=False
+            pass #start engaging grabber
         elif new_state==RELEASING:
-            self.releasing=False
+            pass #start opening grabber
     #def timed_out(self, limit_ms):
      #   if ticks_diff(ticks_ms(), self.state_start)>limit_ms:
       #      self.change_state(IDLE)
@@ -302,7 +303,6 @@ class Robot:
                 self.change_state(FOLLOW_LINE)
             elif action==DROP:
                 self.route_step+=1
-                print("Changing to reease")
                 self.change_state(RELEASING)
             elif action==COLLECT: #for testing only
                 self.route_step+=1
@@ -345,7 +345,6 @@ class Robot:
                 self.turn=SPIN
                 self.change_state(TURNING)
     def run_releasing(self):
-        print('calling drop')
         self.motorServoGrab.open_grabber()
         self.change_states(STOPPED)
     def run_parking(self):
