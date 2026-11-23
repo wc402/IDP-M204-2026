@@ -41,7 +41,7 @@ STATE_NAMES = ("IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
                "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING")
 STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSING = range(8) #Possible route actions
 ## Define routes
-route=[COLLECT]
+route=[COLLECT,DROP]
 ## Set up robot
 class Robot:
     def __init__(self):
@@ -156,9 +156,8 @@ class Robot:
             self.turn_correctionFL=False
         elif new_state== GRABBING:
             self.grabbing=False
-            pass #start engaging grabber
         elif new_state==RELEASING:
-            pass #start opening grabber
+            self.releasing=False
     #def timed_out(self, limit_ms):
      #   if ticks_diff(ticks_ms(), self.state_start)>limit_ms:
       #      self.change_state(IDLE)
@@ -246,6 +245,8 @@ class Robot:
             if ticks_diff(ticks_ms(), self.state_start)<TIMEOUT_SPIN:
                 self.motorL.Reverse(BASESPEED)
                 self.motorR.Forward(BASESPEED)
+            else:
+                self.finished_timed_turn=True
         else:
             if ticks_diff(ticks_ms(),self.state_start)<TIMEOUT_FORWARD: #Moves forward until wheels are on the junction
                 self.run_move_straight()
@@ -292,6 +293,7 @@ class Robot:
                 self.change_state(FOLLOW_LINE)
             elif action==DROP:
                 self.route_step+=1
+                print("Changing to reease")
                 self.change_state(RELEASING)
             elif action==COLLECT: #for testing only
                 self.route_step+=1
@@ -316,19 +318,21 @@ class Robot:
         self.change_state(GRABBING)
     def run_grabbing(self):
         #if self.distanceSens.read_distance()<GRAB_DISTANCE:
-        if ticks_diff(ticks_ms(), self.state_start)<1:
+        if self.grabbing == False and ticks_diff(ticks_ms(), self.state_start)<2300:
             self.run_move_straight()
-            print("forwards")
         #elif self.distanceSens.read_distance()>=GRAB_DISTANCE:
-        else:
-            self.grabbing==True
-        if self.grabbing:
-            print("grabbing")
+        elif self.grabbing == False:
             self.motorR.off()
             self.motorL.off()
+            self.grabbing=True
+            self.state_start=ticks_ms()
+        if self.grabbing and ticks_diff(ticks_ms(), self.state_start)<2000:
             self.motorServoGrab.close_grabber()
+        elif self.grabbing:
+            self.turn=SPIN
             self.change_state(TURNING)
     def run_releasing(self):
+        print('calling drop')
         self.motorServoGrab.open_grabber()
         self.change_state(IDLE)
     def run_parking(self):
@@ -349,6 +353,8 @@ if __name__=="__main__":
         
         
         
+
+
 
 
 
