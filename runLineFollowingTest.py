@@ -11,7 +11,7 @@ SEARCH_SPEED=30 #when finding lost line
 TIMEOUT_STRAIGHT=300 #time to go straight ahead, passing ONE junction
 TIMEOUT_90=980 #turn time limit (milliseconds)
 TIMEOUT_180 = 1800 #calibrate separately to TIMEOUT_90 for accuracy
-TIMEOUT_PICK=2000 #time to reach pickup bay (milliseconds)
+TIMEOUT_PICK=2300 #time to reach pickup bay (milliseconds)
 TIMEOUT_DROP=100 #time to reach dropoff area (milliseconds)
 TIMEOUT_JUNCTION = 800 #time to get wheels on junction
 TIMEOUT_STRAIGHT_AFTER_TURNING=100 #not too long that we miss next junction
@@ -38,6 +38,8 @@ TIMEOUT = [TIMEOUT_STRAIGHT, TIMEOUT_90, TIMEOUT_180, TIMEOUT_PICK, TIMEOUT_DROP
 test1=[5,7,9,1,0] #PICKUP TEST (closest bay)
 test2=[0,3,8,11,4,1,0] #DROPOFF TEST (closest area)
 test3=[7,9,8]
+test4=[0,4,0,0,5,7,9,1,3,8,11,4,0,1,0]
+test5 =[7]
 
 buttonSS = Pin(17, Pin.IN, Pin.PULL_DOWN)
 
@@ -45,7 +47,7 @@ while buttonSS.value() == 0:
     pass
 print("Button pressed! Starting program.")
 
-follow_route(test3, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
+follow_route(test4, lineSensFL, lineSensML, lineSensMR, lineSensFR, motorR, motorL, MAXSTEER, BASESPEED, SEARCH_SPEED, TIMEOUT, steer, lastError, STEP)
 
 #Number assignment (integers to avoid bugs)
 #0: straight ahead
