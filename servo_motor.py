@@ -5,7 +5,7 @@ MIN_DUTY=1638
 MAX_DUTY=8192
 
 class servoMotor:
-    def __init__(self, cal_table, servo_pin, feedback_pin, start_angle=180):
+    def __init__(self, cal_table, servo_pin, feedback_pin, start_angle=20):
         self.pwm=PWM(Pin(servo_pin))
         self.pwm.freq(50)
         self.adc=ADC(Pin(feedback_pin))

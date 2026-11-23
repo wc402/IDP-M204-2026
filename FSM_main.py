@@ -41,7 +41,7 @@ STATE_NAMES = ("STOPPED", "IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
                "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING")
 STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSE = range(8) #Possible route actions
 ## Define routes
-route=[COLLECT, STRAIGHT, LEFT]
+route=[STRAIGHT, RIGHT, COLLECT, STRAIGHT, LEFT]
 ## Set up robot
 class Robot:
     def __init__(self):
@@ -89,7 +89,7 @@ class Robot:
         
         ## Dictionary to match states to executable functions
         self.handlers = {
-            STOPPED: self.run_stopped
+            STOPPED: self.run_stopped,
             IDLE: self.run_idle,
             FOLLOW_LINE: self.run_follow_line,
             AT_JUNCTION: self.run_at_junction,
@@ -165,13 +165,13 @@ class Robot:
     def handle_button(self):
         if not self.pressed:
             return
-    self.pressed=False
-    if self.state == IDLE:
-        self.change_state(AT_JUNCTION)
-    elif self.state == STOPPED:
-        self.change_state(IDLE)
-    else:
-        self.change_state(STOPPED)
+        self.pressed=False
+        if self.state == IDLE:
+            self.change_state(AT_JUNCTION)
+        elif self.state == STOPPED:
+            self.change_state(IDLE)
+        else:
+            self.change_state(STOPPED)
     def run(self):
         while True:
             #if self.route_step==0:
@@ -327,19 +327,23 @@ class Robot:
         self.change_state(GRABBING)
     def run_grabbing(self):
         #if self.distanceSens.read_distance()<GRAB_DISTANCE:
-        if self.grabbing == False and ticks_diff(ticks_ms(), self.state_start)<2500:
+        if self.grabbing == False and ticks_diff(ticks_ms(), self.state_start)<4500:
             self.run_move_straight()
         #elif self.distanceSens.read_distance()>=GRAB_DISTANCE:
         elif self.grabbing == False:
             self.motorR.off()
             self.motorL.off()
             self.grabbing=True
-            self.state_start=ticks_ms()
-        if self.grabbing and ticks_diff(ticks_ms(), self.state_start)<2000:
+        if self.grabbing and ticks_diff(ticks_ms(), self.state_start+4500)<2000:
+            print("closing")
             self.motorServoGrab.close_grabber()
         elif self.grabbing:
-            self.turn=SPIN
-            self.change_state(TURNING)
+            if ticks_diff(ticks_ms(), self.state_start+6500)<1500:
+                print("reversing")
+                self.run_reversing()
+            else:
+                self.turn=SPIN
+                self.change_state(TURNING)
     def run_releasing(self):
         self.motorServoGrab.open_grabber()
         self.change_states(STOPPED)
@@ -361,6 +365,8 @@ if __name__=="__main__":
         
         
         
+
+
 
 
 
