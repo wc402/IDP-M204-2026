@@ -9,10 +9,10 @@
 from machine import Pin, I2C
 from utime import sleep_ms
 
-SDA_PIN = 8
-SCL_PIN = 9
+SDA_PIN = 18
+SCL_PIN = 19
 
-i2c = I2C(0, sda=Pin(SDA_PIN), scl=Pin(SCL_PIN), freq=100000)
+i2c = I2C(1, sda=Pin(SDA_PIN), scl=Pin(SCL_PIN), freq=100000)
 found = i2c.scan()
 print("I2C devices found:", [hex(a) for a in found])
 
