@@ -1,5 +1,9 @@
 #navigation programs
 
+class Navigation:
+    def
+
+
 #Route planning (for red and green boxes use magnets. blue boxes?)
 
 #0: straight ahead
