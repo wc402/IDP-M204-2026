@@ -1,3 +1,5 @@
+#navigation programs
+
 #Route planning (for red and green boxes use magnets. blue boxes?)
 
 #0: straight ahead
@@ -40,4 +42,5 @@ left_cut_losses = [4,4,4,4,4,4,4,4,4,2,0,1] #ensure transition from 4->2 works
 right_bay = [2,0,1,0,0]
 right_pickup = [1,3,4,1] * 6
 right_return = [4,0,0,0,0,0,0]
+
 
