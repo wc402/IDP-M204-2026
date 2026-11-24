@@ -5,24 +5,25 @@ from distance_sensor import ToF
 from hall_sensor import hallSens, NORTH, SOUTH, NONE
 from servo_motor import servoMotor
 from IR_sensor import IRSens
-## Calibration constants
-BASESPEED=70
-SEARCHSPEED=50
-STEP=1 
-MAXSTEER=20
-HALL_THRESHOLD=15 #Change in reading required for a magnet to be deemed present(mV, )
-HALL_DISTANCE=0#Distance at which Hall reading is taken (calibrate)
-HALL_SETTLE=100 #time delay before taking a hall sensor reading )(ms)
-GRAB_DISTANCE =50#Distance at which grabber is engaged (calibrate)
-DEBOUNCE = 500 #Debouncing delay for button(ms)
-JUNCTION_LOOPS=10 #Number of times a junction must be detected before it can be acted upon (calibrate)
-CLEAR_LOOPS=10 #Number of times outer sensors must be clear for before a new junction can be detected (Calibrate)
-TIMEOUT90=900 #ms for initial 90 degree turn (Calibrate)
-TIMEOUT_SPIN=2200 #ms for initial 180 degree turn (Calibrate)
-TIMEOUT_FORWARD=600 # time to move wheels forward onto junction for a turn
-TIMEOUT_DETECTION=3000 #Timelimit for a detection
 
-SERVO_GRAB_CAL_TABLE = [
+## Calibration constants
+BASESPEED=70 #Initial motor speed (both motors, pwm %)
+SEARCHSPEED=50 #Speed for final, untimed turn segement (pwm%)
+STEP=1 #Error multiplication factor for line following control
+MAXSTEER=20 #Maximum additional steering for path correction (pwm%)
+HALL_THRESHOLD=15 #Change in reading required for a magnet to be deemed present(mV, CALIBRATE)
+HALL_DISTANCE=0#Distance at which Hall reading is taken (CALIBRATE)
+HALL_SETTLE=100 #time delay before taking a hall sensor reading)(ms)
+GRAB_DISTANCE =50#Distance at which grabber is engaged (CALIBRATE)
+DEBOUNCE = 500 #Debouncing delay for button(ms)
+JUNCTION_LOOPS=10 #Number of times a junction must be detected before it can be acted upon
+CLEAR_LOOPS=10 #Number of times outer sensors must be clear for before a new junction can be detected
+TIMEOUT90=900 #ms for initial, timed segment of 90 degree turn
+TIMEOUT_SPIN=2200 #ms for initial, timed segment of 180 degree turn
+TIMEOUT_FORWARD=600 # time to move wheels forward onto junction for a turn (ms)
+TIMEOUT_DETECTION=3000 #Time limit for a detection (unused)
+
+SERVO_GRAB_CAL_TABLE = [ #Used to calibrate servo motors
     (0,   5332),
     (27,  11897),
     (54,  18960),
@@ -36,14 +37,15 @@ SERVO_GRAB_CAL_TABLE = [
     (270, 62970)
 ]
 
-## Define states
+## State definition
 (STOPPED, IDLE, FOLLOW_LINE, AT_JUNCTION, REVERSING, TURNING, DETECTING_PACKAGE, GRABBING, RELEASING, PARKING, WAITING)=range(11) #Possible states
 STATE_NAMES = ("STOPPED", "IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
-               "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING")
+               "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING") #Used for debugging print statements
 STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSE, WAIT = range(9) #Possible route actions
-## Define routes
+## Test route
 route=[COLLECT, STRAIGHT, LEFT, LEFT]
-## Set up robot
+
+## Robot class
 class Robot:
     def __init__(self):
         ## Set up I/O components
@@ -63,9 +65,8 @@ class Robot:
         self.IRSens=IRSens(pin=14)
         self.buttonSS.irq(trigger=Pin.IRQ_RISING, handler=self.on_button)
         
-        ## Add hall, IR sensors; servo motor
         
-        ## Initialise task variables
+        ## Initialise variables for executing route actions
         self.steer = 0
         self.last_error = 0
         self.state=IDLE
@@ -101,11 +102,10 @@ class Robot:
             RELEASING: self.run_releasing,
             PARKING: self.run_parking,
             WAITING: self.run_waiting}
-        ## Add button and LED functionality (have flash at ~2Hz)
         
     def on_button(self,pin):
         now=ticks_ms()
-        if ticks_diff(now, self.last_press) < DEBOUNCE:
+        if ticks_diff(now, self.last_press) < DEBOUNCE: #Debounces button press
             return
         self.last_press=now
         if self.state != IDLE and self.state != STOPPED:
@@ -127,7 +127,7 @@ class Robot:
             self.ir.stop() #Stops taking IR sensor readings when leaving the WAITING state
         self.state=new_state
         self.state_start=ticks_ms()
-        print("Now " + STATE_NAMES[new_state])
+        #print("Now " + STATE_NAMES[new_state])
         if new_state==STOPPED:
             self.motorR.off()
             self.motorL.off()
@@ -167,28 +167,28 @@ class Robot:
       #      self.change_state(IDLE)
         # Main function to run. Should not contain any sleeps/blockimg
     def handle_button(self):
-        if not self.pressed:
+        if not self.pressed: #Nothing happens if button not pressed
             return
         self.pressed=False
-        if self.state == IDLE:
+        if self.state == IDLE: #First press puts AGV into STOPPED state, second into IDLE to allow AGV to restart route
             self.change_state(AT_JUNCTION)
         elif self.state == STOPPED:
             self.change_state(IDLE)
         else:
             self.change_state(STOPPED)
     def run(self):
+        #Function called for the AGV to perform the tasks, checks state once per clock cycle and performs the relevant action
         while True:
             #if self.route_step==0:
                 #hallSens.calibrate_hallSens()
             self.handle_button()
-            self.handlers[self.state]() #runs current state once
+            self.handlers[self.state]()
         # Executed when idle
     def run_stopped(self):
-        pass
+        pass #Does nothing when stopped
     def run_idle(self):
         pass
-        # Executed to follow a straight line
-    def run_follow_line(self): #Junction decision making has changed, straight line following has not
+    def run_follow_line(self):
         error= self.lineSensML.value()-self.lineSensMR.value()
         if error !=0: #Robot off centre but still detecting line (only one sensor on). Correction grows with each step
             self.last_error=error
