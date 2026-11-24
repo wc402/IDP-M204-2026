@@ -4,6 +4,7 @@ from motor import Motor
 from distance_sensor import ToF
 from hall_sensor import hallSens, NORTH, SOUTH, NONE
 from servo_motor import servoMotor
+from IR_sensor import IRSens
 ## Calibration constants
 BASESPEED=70
 SEARCHSPEED=50
@@ -36,10 +37,10 @@ SERVO_GRAB_CAL_TABLE = [
 ]
 
 ## Define states
-(STOPPED, IDLE, FOLLOW_LINE, AT_JUNCTION, REVERSING, TURNING, DETECTING_PACKAGE, GRABBING, RELEASING, PARKING)=range(10) #Possible states
+(STOPPED, IDLE, FOLLOW_LINE, AT_JUNCTION, REVERSING, TURNING, DETECTING_PACKAGE, GRABBING, RELEASING, PARKING, WAITING)=range(11) #Possible states
 STATE_NAMES = ("STOPPED", "IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
                "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING")
-STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSE = range(8) #Possible route actions
+STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSE, WAIT = range(9) #Possible route actions
 ## Define routes
 route=[COLLECT, STRAIGHT, LEFT, LEFT]
 ## Set up robot
@@ -59,7 +60,7 @@ class Robot:
         self.LEDG=Pin(12, Pin.OUT)
         #self.distanceSens=ToF()
         #self.hallSens=hallSens(pin=28, threshold_mv=HALL_THRESHOLD)
-        self.IRSens=None
+        self.IRSens=IRSens(pin=14)
         self.buttonSS.irq(trigger=Pin.IRQ_RISING, handler=self.on_button)
         
         ## Add hall, IR sensors; servo motor
@@ -98,7 +99,8 @@ class Robot:
             DETECTING_PACKAGE: self.run_detecting,
             GRABBING: self.run_grabbing,
             RELEASING: self.run_releasing,
-            PARKING: self.run_parking}
+            PARKING: self.run_parking,
+            WAITING: self.run_waiting}
         ## Add button and LED functionality (have flash at ~2Hz)
         
     def on_button(self,pin):
@@ -121,6 +123,8 @@ class Robot:
             self.yellowOn=False
             self.LEDY.value(0)
     def change_state(self, new_state):
+        if self.state == WAITING:
+            self.ir.stop() #Stops taking IR sensor readings when leaving the WAITING state
         self.state=new_state
         self.state_start=ticks_ms()
         print("Now " + STATE_NAMES[new_state])
@@ -356,6 +360,10 @@ class Robot:
         #complete later
         self.change_state(STOPPED)
         return
+    def run_waiting(self):
+        self.IRSens.update()
+        if self.IRSens.detected():
+            self.change_state(AT_JUNCTION)
     ##Add flashing lights
 if __name__=="__main__":
     robot=Robot()
