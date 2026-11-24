@@ -223,7 +223,7 @@ class Robot:
         self.steer=max(-MAXSTEER, min(MAXSTEER, self.steer))
         self.motorR.Forward(BASESPEED-self.steer)
         self.motorL.Forward(BASESPEED+self.steer)
-        # Executed to perform decision making at junctions
+    #Reversing with junction detection
     def run_reversing(self):
         error=self.lineSensML.value()-self.lineSensMR.value()
         if error !=0:
@@ -231,7 +231,30 @@ class Robot:
             self.steer-=error*STEP
         else:
             self.steer=0
-            self.steer=max(-MAXSTEER, min(MAXSTEER, self.steer))
+        if self.act:  
+            if self.lineSensFL.value()==1 or self.lineSensFR.value()==1:
+                self.junction_count+=1
+                self.clear_count=0
+            if self.junction_count>=JUNCTION_LOOPS:
+                self.change_state(AT_JUNCTION)
+        elif not self.act:
+            if self.lineSensFL.value()==0 and self.lineSensFR.value()==0:
+                 self.clear_count+=1
+                 self.junction_count=0
+            if self.clear_count>=CLEAR_LOOPS:
+                self.act=True
+        self.steer=max(-MAXSTEER, min(MAXSTEER, self.steer))
+        self.motorR.Reverse(BASESPEED+self.steer)
+        self.motorL.Reverse(BASESPEED-self.steer)
+    #Reversing without junction detection
+    def move_backwards(self):
+        error=self.lineSensML.value()-self.lineSensMR.value()
+        if error !=0:
+            self.lastError=error
+            self.steer-=error*STEP
+        else:
+            self.steer=0
+        self.steer=max(-MAXSTEER, min(MAXSTEER, self.steer))
         self.motorR.Reverse(BASESPEED+self.steer)
         self.motorL.Reverse(BASESPEED-self.steer)
     def run_at_junction(self):
@@ -339,7 +362,7 @@ class Robot:
                 self.LEDR.value(1)
             if ticks_diff(ticks_ms(), self.state_start+6500)<1000:
                 print("reversing")
-                self.run_reversing()
+                self.run_move_backwards()
             else:
                 self.turn=SPIN
                 self.change_state(TURNING)
@@ -349,11 +372,8 @@ class Robot:
             self.motorServoGrab.open_grabber()
         self.LEDR.value(0)
         self.LEDL.value(0)
-        elif ticks_diff(ticks_ms(), self.state_start+2000)<1000: #Need to take this off of a timer
-            self.carrying=False
-            self.run_reversing()
         else:
-            self.change_state(AT_JUNCTION)
+            self.change_state(REVERSING)
     def run_parking(self):
         #complete later
         self.change_state(STOPPED)
