@@ -17,7 +17,7 @@ DEBOUNCE = 500 #Debouncing delay for button(ms)
 JUNCTION_LOOPS=10 #Number of times a junction must be detected before it can be acted upon (calibrate)
 CLEAR_LOOPS=10 #Number of times outer sensors must be clear for before a new junction can be detected (Calibrate)
 TIMEOUT90=900 #ms for initial 90 degree turn (Calibrate)
-TIMEOUT_SPIN=1800 #ms for initial 180 degree turn (Calibrate)
+TIMEOUT_SPIN=2200 #ms for initial 180 degree turn (Calibrate)
 TIMEOUT_FORWARD=600 # time to move wheels forward onto junction for a turn
 TIMEOUT_DETECTION=3000 #Timelimit for a detection
 
@@ -41,7 +41,7 @@ STATE_NAMES = ("STOPPED", "IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
                "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING")
 STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSE = range(8) #Possible route actions
 ## Define routes
-route=[STRAIGHT, RIGHT, COLLECT, STRAIGHT, LEFT]
+route=[COLLECT, STRAIGHT, LEFT, LEFT]
 ## Set up robot
 class Robot:
     def __init__(self):
@@ -338,7 +338,7 @@ class Robot:
             print("closing")
             self.motorServoGrab.close_grabber()
         elif self.grabbing:
-            if ticks_diff(ticks_ms(), self.state_start+6500)<1500:
+            if ticks_diff(ticks_ms(), self.state_start+6500)<1000:
                 print("reversing")
                 self.run_reversing()
             else:
