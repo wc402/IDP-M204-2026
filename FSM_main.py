@@ -345,8 +345,13 @@ class Robot:
                 self.turn=SPIN
                 self.change_state(TURNING)
     def run_releasing(self):
-        self.motorServoGrab.open_grabber()
-        self.change_states(STOPPED)
+        if ticks_diff(ticks_ms(), self.state_start)<2000:
+            print("opening")
+            self.motorServoGrab.open_grabber()
+        elif ticks_diff(ticks_ms(), self.state_start+2000)<1000:
+            self.run_reversing()
+        else:
+            self.change_state(AT_JUNCTION)
     def run_parking(self):
         #complete later
         self.change_state(STOPPED)
