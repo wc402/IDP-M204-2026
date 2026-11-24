@@ -86,6 +86,7 @@ class Robot:
         self.turn_correctionFR=False
         self.turn_correctionFL=False
         self.grabbing=False
+        self.package_polarity = 'red' #red default for now
         
         ## Dictionary to match states to executable functions
         self.handlers = {
@@ -320,11 +321,13 @@ class Robot:
             #if hallSens_reading is NONE:
              #   print("no magnet")
             #elif hallSens_reading is NORTH:
+             # self.package_polarity = 'red'
              #   self.LEDR.value(1)
               #  self.change_state(GRABBING)
             #elif hallSens_reading is SOUTH:
-             #   self.LEFL.value(1)
-        self.change_state(GRABBING)
+              # self.package_polarity = 'green'
+             #   self.LEDG.value(1)
+              #  self.change_state(GRABBING)
     def run_grabbing(self):
         #if self.distanceSens.read_distance()<GRAB_DISTANCE:
         if self.grabbing == False and ticks_diff(ticks_ms(), self.state_start)<4500:
