@@ -78,7 +78,6 @@ class Robot:
         self.clear_count=0 #Used to ensure the AGV has passed a junction before it can act on another
         self.act= False
         self.turn= LEFT #Default, can change
-        self.carrying=False
         self.polarity=None
         self.flashTimer=Timer()
         self.yellowOn=False
@@ -159,9 +158,8 @@ class Robot:
             self.turn_correctionFL=False
         elif new_state== GRABBING:
             self.grabbing=False
-            pass #start engaging grabber
         elif new_state==RELEASING:
-            pass #start opening grabber
+            self.polarity=None
     #def timed_out(self, limit_ms):
      #   if ticks_diff(ticks_ms(), self.state_start)>limit_ms:
       #      self.change_state(IDLE)
@@ -320,14 +318,7 @@ class Robot:
         #elif self.distanceSens.read_distance()>=HALL_DISTANCE:
          #   self.motorR.off()
           #  self.motorL.off()
-           # hallSens_reading=hallSens.package_polarity()
-            #if hallSens_reading is NONE:
-             #   print("no magnet")
-            #elif hallSens_reading is NORTH:
-             #   self.LEDR.value(1)
-              #  self.change_state(GRABBING)
-            #elif hallSens_reading is SOUTH:
-             #   self.LEFL.value(1)
+           # self.polarity=hallSens.package_polarity()
         self.change_state(GRABBING)
     def run_grabbing(self):
         #if self.distanceSens.read_distance()<GRAB_DISTANCE:
@@ -342,6 +333,10 @@ class Robot:
             print("closing")
             self.motorServoGrab.close_grabber()
         elif self.grabbing:
+            if self.polarity == NORTH:
+                self.LEDR.value(1)
+            elif self.polarity== SOUTH:
+                self.LEDR.value(1)
             if ticks_diff(ticks_ms(), self.state_start+6500)<1000:
                 print("reversing")
                 self.run_reversing()
@@ -352,7 +347,10 @@ class Robot:
         if ticks_diff(ticks_ms(), self.state_start)<2000:
             print("opening")
             self.motorServoGrab.open_grabber()
-        elif ticks_diff(ticks_ms(), self.state_start+2000)<1000:
+        self.LEDR.value(0)
+        self.LEDL.value(0)
+        elif ticks_diff(ticks_ms(), self.state_start+2000)<1000: #Need to take this off of a timer
+            self.carrying=False
             self.run_reversing()
         else:
             self.change_state(AT_JUNCTION)
