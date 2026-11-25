@@ -61,7 +61,7 @@ class Robot:
         self.LEDR=Pin(10, Pin.OUT) #NEED LEDY=11, LEDR=10 FOR ACTUAL RUN
         self.LEDG=Pin(12, Pin.OUT)
         #self.distanceSens=ToF()
-        #self.hallSens=hallSens(pin=28, threshold_mv=HALL_THRESHOLD)
+        self.hallSens=hallSens(pin=28, threshold_mv=HALL_THRESHOLD)
         self.IRSens=IRSens(pin=14)
         self.buttonSS.irq(trigger=Pin.IRQ_RISING, handler=self.on_button)
         
@@ -177,8 +177,8 @@ class Robot:
     def run(self):
         #Function called for the AGV to perform the tasks, checks state once per clock cycle and performs the relevant action
         while True:
-            #if self.route_step==0:
-                #hallSens.calibrate_hallSens()
+            if self.route_step==0:
+                hallSens.calibrate_hallSens()
             self.handle_button()
             self.handlers[self.state]()
         # Executed when idle
@@ -370,8 +370,8 @@ class Robot:
         if ticks_diff(ticks_ms(), self.state_start)<2000:
             print("opening")
             self.motorServoGrab.open_grabber()
-        self.LEDR.value(0)
-        self.LEDL.value(0)
+            self.LEDR.value(0)
+            self.LEDL.value(0)
         else:
             self.change_state(REVERSING)
     def run_parking(self):
