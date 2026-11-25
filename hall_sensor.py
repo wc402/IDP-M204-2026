@@ -9,7 +9,7 @@ BASE_MIN_MV=1590 #mV, lower limit for background field reading
 BASE_MAX_MV=1710 #mV, upper limit for background field reading
 
 class hallSens:
-    def __init__ (self, pin=28, threshold_mv=15, swap_poles=False, samples=200):
+    def __init__ (self, pin=28, threshold_mv=15, swap_poles=True, samples=200):
         self.adc=ADC(Pin(pin))
         self.threshold_mv=threshold_mv
         self.swap=swap_poles
@@ -43,3 +43,5 @@ class hallSens:
         if diff<-self.threshold_mv:
             return NORTH
         return NONE
+
+

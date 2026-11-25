@@ -62,7 +62,7 @@ class Robot:
         self.LEDG=Pin(12, Pin.OUT)
         #self.distanceSens=ToF()
         self.hallSens=hallSens(pin=28, threshold_mv=HALL_THRESHOLD)
-        self.IRSens=IRSens(pin=14)
+        self.IRSens=IRSens(ir_pin=14)
         
         self.hallSens.calibrate_hallSens()
         ## Initialise variables for executing route actions
@@ -86,6 +86,9 @@ class Robot:
         self.turn_correctionFR=False
         self.turn_correctionFL=False
         self.grabbing=False
+        self.LEDY.value(0)
+        self.LEDR.value(0)
+        self.LEDG.value(0)
         
         ## Dictionary to match states to executable functions
         self.handlers = {
@@ -133,6 +136,8 @@ class Robot:
             self.motorL.off()
             self.set_yellow(False)
             self.LEDY.value(1)
+            self.LEDG.value(0)
+            self.LEDR.value(0)
         if new_state== IDLE:
             self.motorR.off()
             self.motorL.off()
@@ -141,7 +146,9 @@ class Robot:
             self.act = False
             self.turn=LEFT
             self.set_yellow(False)
-            self.LEDY.value(1)            
+            self.LEDY.value(1)
+            self.LEDG.value(0)
+            self.LEDR.value(0)
         else:
             self.set_yellow(True)
             pass
@@ -356,6 +363,7 @@ class Robot:
             self.motorServoGrab.close_grabber()
         elif self.grabbing:
             self.polarity=self.hallSens.package_polarity()
+            print(self.polarity)
             if self.polarity == NORTH:
                 self.LEDR.value(1)
             elif self.polarity== SOUTH:
@@ -396,6 +404,8 @@ if __name__=="__main__":
         
         
         
+
+
 
 
 
