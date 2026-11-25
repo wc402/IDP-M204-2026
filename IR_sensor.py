@@ -2,7 +2,7 @@ from machine import Pin, disable_irq, enable_irq
 from time import ticks_ms, ticks_diff
 
 class IRSens:
-    def __init__(self, ir_pin, window_ms=2000, min_pulses=1):
+    def __init__(self, ir_pin, window_ms=2000, min_pulses=105):
         #Note that output is active low
         self.pin=Pin(ir_pin, Pin.IN, Pin.PULL_UP)
         self.window_ms=window_ms

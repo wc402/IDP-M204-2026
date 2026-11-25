@@ -43,7 +43,7 @@ STATE_NAMES = ("STOPPED", "IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
                "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING") #Used for debugging print statements
 STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSE, WAIT = range(9) #Possible route actions
 ## Test route
-route=[WAITING]
+route=[STRAIGHT, RIGHT, RIGHT, SPIN, RIGHT, RIGHT]
 
 ## Robot class
 class Robot:
@@ -126,11 +126,11 @@ class Robot:
             self.yellowOn=False
             self.LEDY.value(0)
     def change_state(self, new_state):
-        #if self.state == WAITING:
-         #   self.IRSens.stop() #Stops taking IR sensor readings when leaving the WAITING state
         self.state=new_state
         self.state_start=ticks_ms()
         #print("Now " + STATE_NAMES[new_state])
+        if self.state == WAITING:        # leaving WAITING
+            self.IRSens.close()
         if new_state==STOPPED:
             self.motorR.off()
             self.motorL.off()
@@ -168,6 +168,8 @@ class Robot:
             self.grabbing=False
         elif new_state==RELEASING:
             self.polarity=None
+        elif new_state == WAITING:
+            self.IRSens.start()
     #def timed_out(self, limit_ms):
      #   if ticks_diff(ticks_ms(), self.state_start)>limit_ms:
       #      self.change_state(IDLE)
@@ -279,6 +281,8 @@ class Robot:
                 self.change_state(DETECTING_PACKAGE)
             elif action== PARK:
                 self.change_state(PARKING)
+            elif action == WAIT:
+                self.change_state(WAITING)
         # Exectuted to perform turns
     def run_turning(self):
         action=self.turn
@@ -341,7 +345,7 @@ class Robot:
             elif action==PARK:
                 self.route_step+=1
                 self.change_state(PARKING)
-            elif action == WAITING:
+            elif action == WAIT:
                 self.route_step+=1
                 self.change_state(WAITING)
     def run_detecting(self):
@@ -395,8 +399,8 @@ class Robot:
         self.motorL.off()
         self.IRSens.update()
         if self.IRSens.detected():
-            print("Detected")
-            self.change_state(STRAIGHT)
+            print("--Detected--")
+            self.change_state(FOLLOW_LINE)
     ##Add flashing lights
 if __name__=="__main__":
     robot=Robot()
