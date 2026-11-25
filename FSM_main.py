@@ -43,7 +43,7 @@ STATE_NAMES = ("STOPPED", "IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
                "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING") #Used for debugging print statements
 STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSE, WAIT = range(9) #Possible route actions
 ## Test route
-route=[COLLECT, STRAIGHT, LEFT, LEFT]
+route=[WAITING]
 
 ## Robot class
 class Robot:
@@ -126,8 +126,8 @@ class Robot:
             self.yellowOn=False
             self.LEDY.value(0)
     def change_state(self, new_state):
-        if self.state == WAITING:
-            self.IRSens.stop() #Stops taking IR sensor readings when leaving the WAITING state
+        #if self.state == WAITING:
+         #   self.IRSens.stop() #Stops taking IR sensor readings when leaving the WAITING state
         self.state=new_state
         self.state_start=ticks_ms()
         #print("Now " + STATE_NAMES[new_state])
@@ -341,6 +341,9 @@ class Robot:
             elif action==PARK:
                 self.route_step+=1
                 self.change_state(PARKING)
+            elif action == WAITING:
+                self.route_step+=1
+                self.change_state(WAITING)
     def run_detecting(self):
         #if self.distanceSens.read_distance()<HALL_DISTANCE:
          #   self.run_move_straight()
@@ -387,9 +390,13 @@ class Robot:
         self.change_state(STOPPED)
         return
     def run_waiting(self):
+        print("Detecting")
+        self.motorR.off()
+        self.motorL.off()
         self.IRSens.update()
         if self.IRSens.detected():
-            self.change_state(AT_JUNCTION)
+            print("Detected")
+            self.change_state(STRAIGHT)
     ##Add flashing lights
 if __name__=="__main__":
     robot=Robot()
@@ -404,6 +411,8 @@ if __name__=="__main__":
         
         
         
+
+
 
 
 
