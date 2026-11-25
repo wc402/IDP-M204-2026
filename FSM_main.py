@@ -63,9 +63,8 @@ class Robot:
         #self.distanceSens=ToF()
         self.hallSens=hallSens(pin=28, threshold_mv=HALL_THRESHOLD)
         self.IRSens=IRSens(pin=14)
-        self.buttonSS.irq(trigger=Pin.IRQ_RISING, handler=self.on_button)
         
-        
+        self.hallSens.calibrate_hallSens()
         ## Initialise variables for executing route actions
         self.steer = 0
         self.last_error = 0
@@ -102,6 +101,8 @@ class Robot:
             PARKING: self.run_parking,
             WAITING: self.run_waiting}
         
+        self.buttonSS.irq(trigger=Pin.IRQ_RISING, handler=self.on_button)
+
     def on_button(self,pin):
         now=ticks_ms()
         if ticks_diff(now, self.last_press) < DEBOUNCE: #Debounces button press
@@ -123,7 +124,7 @@ class Robot:
             self.LEDY.value(0)
     def change_state(self, new_state):
         if self.state == WAITING:
-            self.ir.stop() #Stops taking IR sensor readings when leaving the WAITING state
+            self.IRSens.stop() #Stops taking IR sensor readings when leaving the WAITING state
         self.state=new_state
         self.state_start=ticks_ms()
         #print("Now " + STATE_NAMES[new_state])
@@ -135,9 +136,9 @@ class Robot:
         if new_state== IDLE:
             self.motorR.off()
             self.motorL.off()
-            self.steer, self.last_error, self.route_step, self.junction_count, self.clear_count, =0,0,0,0,0
+            self.steer, self.last_error, self.route_step, self.junction_count, self.clear_count =0,0,0,0,0
             self.polarity=None
-            self.act, self.carrying = False, False
+            self.act = False
             self.turn=LEFT
             self.set_yellow(False)
             self.LEDY.value(1)            
@@ -177,8 +178,6 @@ class Robot:
     def run(self):
         #Function called for the AGV to perform the tasks, checks state once per clock cycle and performs the relevant action
         while True:
-            if self.route_step==0:
-                hallSens.calibrate_hallSens()
             self.handle_button()
             self.handlers[self.state]()
         # Executed when idle
@@ -247,7 +246,7 @@ class Robot:
         self.motorR.Reverse(BASESPEED+self.steer)
         self.motorL.Reverse(BASESPEED-self.steer)
     #Reversing without junction detection
-    def move_backwards(self):
+    def run_move_backwards(self):
         error=self.lineSensML.value()-self.lineSensMR.value()
         if error !=0:
             self.lastError=error
@@ -341,7 +340,7 @@ class Robot:
         #elif self.distanceSens.read_distance()>=HALL_DISTANCE:
          #   self.motorR.off()
           #  self.motorL.off()
-           # self.polarity=hallSens.package_polarity()
+           # self.polarity=self.hallSens.package_polarity()
         self.change_state(GRABBING)
     def run_grabbing(self):
         #if self.distanceSens.read_distance()<GRAB_DISTANCE:
@@ -356,10 +355,11 @@ class Robot:
             print("closing")
             self.motorServoGrab.close_grabber()
         elif self.grabbing:
+            self.polarity=self.hallSens.package_polarity()
             if self.polarity == NORTH:
                 self.LEDR.value(1)
             elif self.polarity== SOUTH:
-                self.LEDR.value(1)
+                self.LEDG.value(1)
             if ticks_diff(ticks_ms(), self.state_start+6500)<1000:
                 print("reversing")
                 self.run_move_backwards()
@@ -371,7 +371,7 @@ class Robot:
             print("opening")
             self.motorServoGrab.open_grabber()
             self.LEDR.value(0)
-            self.LEDL.value(0)
+            self.LEDG.value(0)
         else:
             self.change_state(REVERSING)
     def run_parking(self):

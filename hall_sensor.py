@@ -16,7 +16,7 @@ class hallSens:
         self.samples=samples
         self.rest_mv=None
         self.last_change_mv=0
-        self.calibrate()
+        self.calibrate_hallSens()
     def read_hallSens_mv(self, samples=None):
         ## Averages many sample readings (mV)
         n=samples or self.samples
@@ -28,13 +28,13 @@ class hallSens:
         # Measures background field. Call with motors off, away from magnets, and only on start-up
         total=0
         for i in range(readings):
-            total+=self.read_mv
-            sleep_ms(gap_ms)
+            total+=self.read_hallSens_mv()
+            sleep_ms(gaps_ms)
         self.rest_mv=total/readings
-        #if not (BASE_MIN_MV<=self.reset_mv<=BASE_MAX_MV):
+        #if not (BASE_MIN_MV<=self.rest_mv<=BASE_MAX_MV):
         return self.rest_mv
     def package_polarity(self):
-        diff=self.read_mv()-self.rest_mv
+        diff=self.read_hallSens_mv()-self.rest_mv
         if self.swap:
             diff=-diff
         self.last_change_mv=diff
