@@ -1,15 +1,18 @@
-#navigation programs
+#from time import ticks_diff, ticks_ms, sleep
 
-#class Navigation:
-#    def
 
+class Navigation:
+    def __init__(self):
+        self.R1 = True
+        self.R2 = True
+        self.G1 = True
+        self.G2 = True
+        self.drop_area = [R1,R2,G1,G2]
+        
+    def set_angle(self, angle):
 
 #word bank
 #STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSE, WAITING = range(9)
-
-
-DROP_AREA = [R1,R2,G1,G2] #True if empty
-R1,R2,R3,R4 = True, True, True, True
 
 #reset at start of every Main sequence
 N = 6
