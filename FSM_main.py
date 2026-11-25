@@ -4,24 +4,26 @@ from motor import Motor
 from distance_sensor import ToF
 from hall_sensor import hallSens, NORTH, SOUTH, NONE
 from servo_motor import servoMotor
-## Calibration constants
-BASESPEED=70
-SEARCHSPEED=50
-STEP=1 
-MAXSTEER=20
-HALL_THRESHOLD=15 #Change in reading required for a magnet to be deemed present(mV, )
-HALL_DISTANCE=0#Distance at which Hall reading is taken (calibrate)
-HALL_SETTLE=100 #time delay before taking a hall sensor reading )(ms)
-GRAB_DISTANCE =50#Distance at which grabber is engaged (calibrate)
-DEBOUNCE = 500 #Debouncing delay for button(ms)
-JUNCTION_LOOPS=10 #Number of times a junction must be detected before it can be acted upon (calibrate)
-CLEAR_LOOPS=10 #Number of times outer sensors must be clear for before a new junction can be detected (Calibrate)
-TIMEOUT90=900 #ms for initial 90 degree turn (Calibrate)
-TIMEOUT_SPIN=2200 #ms for initial 180 degree turn (Calibrate)
-TIMEOUT_FORWARD=600 # time to move wheels forward onto junction for a turn
-TIMEOUT_DETECTION=3000 #Timelimit for a detection
+from IR_sensor import IRSens
 
-SERVO_GRAB_CAL_TABLE = [
+## Calibration constants
+BASESPEED=70 #Initial motor speed (both motors, pwm %)
+SEARCHSPEED=50 #Speed for final, untimed turn segement (pwm%)
+STEP=1 #Error multiplication factor for line following control
+MAXSTEER=20 #Maximum additional steering for path correction (pwm%)
+HALL_THRESHOLD=15 #Change in reading required for a magnet to be deemed present(mV, CALIBRATE)
+HALL_DISTANCE=0#Distance at which Hall reading is taken (CALIBRATE)
+HALL_SETTLE=100 #time delay before taking a hall sensor reading)(ms)
+GRAB_DISTANCE =50#Distance at which grabber is engaged (CALIBRATE)
+DEBOUNCE = 500 #Debouncing delay for button(ms)
+JUNCTION_LOOPS=10 #Number of times a junction must be detected before it can be acted upon
+CLEAR_LOOPS=10 #Number of times outer sensors must be clear for before a new junction can be detected
+TIMEOUT90=900 #ms for initial, timed segment of 90 degree turn
+TIMEOUT_SPIN=2200 #ms for initial, timed segment of 180 degree turn
+TIMEOUT_FORWARD=600 # time to move wheels forward onto junction for a turn (ms)
+TIMEOUT_DETECTION=3000 #Time limit for a detection (unused)
+
+SERVO_GRAB_CAL_TABLE = [ #Used to calibrate servo motors
     (0,   5332),
     (27,  11897),
     (54,  18960),
@@ -35,14 +37,15 @@ SERVO_GRAB_CAL_TABLE = [
     (270, 62970)
 ]
 
-## Define states
-(STOPPED, IDLE, FOLLOW_LINE, AT_JUNCTION, REVERSING, TURNING, DETECTING_PACKAGE, GRABBING, RELEASING, PARKING)=range(10) #Possible states
+## State definition
+(STOPPED, IDLE, FOLLOW_LINE, AT_JUNCTION, REVERSING, TURNING, DETECTING_PACKAGE, GRABBING, RELEASING, PARKING, WAITING)=range(11) #Possible states
 STATE_NAMES = ("STOPPED", "IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
-               "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING")
-STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSE = range(8) #Possible route actions
-## Define routes
+               "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING") #Used for debugging print statements
+STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSE, WAIT = range(9) #Possible route actions
+## Test route
 route=[COLLECT, STRAIGHT, LEFT, LEFT]
-## Set up robot
+
+## Robot class
 class Robot:
     def __init__(self):
         ## Set up I/O components
@@ -58,13 +61,12 @@ class Robot:
         self.LEDR=Pin(10, Pin.OUT) #NEED LEDY=11, LEDR=10 FOR ACTUAL RUN
         self.LEDG=Pin(12, Pin.OUT)
         #self.distanceSens=ToF()
-        #self.hallSens=hallSens(pin=28, threshold_mv=HALL_THRESHOLD)
-        self.IRSens=None
+        self.hallSens=hallSens(pin=28, threshold_mv=HALL_THRESHOLD)
+        self.IRSens=IRSens(pin=14)
         self.buttonSS.irq(trigger=Pin.IRQ_RISING, handler=self.on_button)
         
-        ## Add hall, IR sensors; servo motor
         
-        ## Initialise task variables
+        ## Initialise variables for executing route actions
         self.steer = 0
         self.last_error = 0
         self.state=IDLE
@@ -76,7 +78,6 @@ class Robot:
         self.clear_count=0 #Used to ensure the AGV has passed a junction before it can act on another
         self.act= False
         self.turn= LEFT #Default, can change
-        self.carrying=False
         self.polarity=None
         self.flashTimer=Timer()
         self.yellowOn=False
@@ -86,7 +87,6 @@ class Robot:
         self.turn_correctionFR=False
         self.turn_correctionFL=False
         self.grabbing=False
-        self.package_polarity = 'red' #red default for now
         
         ## Dictionary to match states to executable functions
         self.handlers = {
@@ -99,12 +99,12 @@ class Robot:
             DETECTING_PACKAGE: self.run_detecting,
             GRABBING: self.run_grabbing,
             RELEASING: self.run_releasing,
-            PARKING: self.run_parking}
-        ## Add button and LED functionality (have flash at ~2Hz)
+            PARKING: self.run_parking,
+            WAITING: self.run_waiting}
         
     def on_button(self,pin):
         now=ticks_ms()
-        if ticks_diff(now, self.last_press) < DEBOUNCE:
+        if ticks_diff(now, self.last_press) < DEBOUNCE: #Debounces button press
             return
         self.last_press=now
         if self.state != IDLE and self.state != STOPPED:
@@ -122,9 +122,11 @@ class Robot:
             self.yellowOn=False
             self.LEDY.value(0)
     def change_state(self, new_state):
+        if self.state == WAITING:
+            self.ir.stop() #Stops taking IR sensor readings when leaving the WAITING state
         self.state=new_state
         self.state_start=ticks_ms()
-        print("Now " + STATE_NAMES[new_state])
+        #print("Now " + STATE_NAMES[new_state])
         if new_state==STOPPED:
             self.motorR.off()
             self.motorL.off()
@@ -156,36 +158,35 @@ class Robot:
             self.turn_correctionFL=False
         elif new_state== GRABBING:
             self.grabbing=False
-            pass #start engaging grabber
         elif new_state==RELEASING:
-            pass #start opening grabber
+            self.polarity=None
     #def timed_out(self, limit_ms):
      #   if ticks_diff(ticks_ms(), self.state_start)>limit_ms:
       #      self.change_state(IDLE)
         # Main function to run. Should not contain any sleeps/blockimg
     def handle_button(self):
-        if not self.pressed:
+        if not self.pressed: #Nothing happens if button not pressed
             return
         self.pressed=False
-        if self.state == IDLE:
+        if self.state == IDLE: #First press puts AGV into STOPPED state, second into IDLE to allow AGV to restart route
             self.change_state(AT_JUNCTION)
         elif self.state == STOPPED:
             self.change_state(IDLE)
         else:
             self.change_state(STOPPED)
     def run(self):
+        #Function called for the AGV to perform the tasks, checks state once per clock cycle and performs the relevant action
         while True:
-            #if self.route_step==0:
-                #hallSens.calibrate_hallSens()
+            if self.route_step==0:
+                hallSens.calibrate_hallSens()
             self.handle_button()
-            self.handlers[self.state]() #runs current state once
+            self.handlers[self.state]()
         # Executed when idle
     def run_stopped(self):
-        pass
+        pass #Does nothing when stopped
     def run_idle(self):
         pass
-        # Executed to follow a straight line
-    def run_follow_line(self): #Junction decision making has changed, straight line following has not
+    def run_follow_line(self):
         error= self.lineSensML.value()-self.lineSensMR.value()
         if error !=0: #Robot off centre but still detecting line (only one sensor on). Correction grows with each step
             self.last_error=error
@@ -222,7 +223,7 @@ class Robot:
         self.steer=max(-MAXSTEER, min(MAXSTEER, self.steer))
         self.motorR.Forward(BASESPEED-self.steer)
         self.motorL.Forward(BASESPEED+self.steer)
-        # Executed to perform decision making at junctions
+    #Reversing with junction detection
     def run_reversing(self):
         error=self.lineSensML.value()-self.lineSensMR.value()
         if error !=0:
@@ -230,7 +231,30 @@ class Robot:
             self.steer-=error*STEP
         else:
             self.steer=0
-            self.steer=max(-MAXSTEER, min(MAXSTEER, self.steer))
+        if self.act:  
+            if self.lineSensFL.value()==1 or self.lineSensFR.value()==1:
+                self.junction_count+=1
+                self.clear_count=0
+            if self.junction_count>=JUNCTION_LOOPS:
+                self.change_state(AT_JUNCTION)
+        elif not self.act:
+            if self.lineSensFL.value()==0 and self.lineSensFR.value()==0:
+                 self.clear_count+=1
+                 self.junction_count=0
+            if self.clear_count>=CLEAR_LOOPS:
+                self.act=True
+        self.steer=max(-MAXSTEER, min(MAXSTEER, self.steer))
+        self.motorR.Reverse(BASESPEED+self.steer)
+        self.motorL.Reverse(BASESPEED-self.steer)
+    #Reversing without junction detection
+    def move_backwards(self):
+        error=self.lineSensML.value()-self.lineSensMR.value()
+        if error !=0:
+            self.lastError=error
+            self.steer-=error*STEP
+        else:
+            self.steer=0
+        self.steer=max(-MAXSTEER, min(MAXSTEER, self.steer))
         self.motorR.Reverse(BASESPEED+self.steer)
         self.motorL.Reverse(BASESPEED-self.steer)
     def run_at_junction(self):
@@ -317,17 +341,8 @@ class Robot:
         #elif self.distanceSens.read_distance()>=HALL_DISTANCE:
          #   self.motorR.off()
           #  self.motorL.off()
-           # hallSens_reading=hallSens.package_polarity()
-            #if hallSens_reading is NONE:
-             #   print("no magnet")
-            #elif hallSens_reading is NORTH:
-             # self.package_polarity = 'red'
-             #   self.LEDR.value(1)
-              #  self.change_state(GRABBING)
-            #elif hallSens_reading is SOUTH:
-              # self.package_polarity = 'green'
-             #   self.LEDG.value(1)
-              #  self.change_state(GRABBING)
+           # self.polarity=hallSens.package_polarity()
+        self.change_state(GRABBING)
     def run_grabbing(self):
         #if self.distanceSens.read_distance()<GRAB_DISTANCE:
         if self.grabbing == False and ticks_diff(ticks_ms(), self.state_start)<4500:
@@ -341,9 +356,13 @@ class Robot:
             print("closing")
             self.motorServoGrab.close_grabber()
         elif self.grabbing:
+            if self.polarity == NORTH:
+                self.LEDR.value(1)
+            elif self.polarity== SOUTH:
+                self.LEDR.value(1)
             if ticks_diff(ticks_ms(), self.state_start+6500)<1000:
                 print("reversing")
-                self.run_reversing()
+                self.run_move_backwards()
             else:
                 self.turn=SPIN
                 self.change_state(TURNING)
@@ -351,35 +370,20 @@ class Robot:
         if ticks_diff(ticks_ms(), self.state_start)<2000:
             print("opening")
             self.motorServoGrab.open_grabber()
-        elif ticks_diff(ticks_ms(), self.state_start+2000)<1000:
-            self.run_reversing()
+            self.LEDR.value(0)
+            self.LEDL.value(0)
         else:
-            self.change_state(AT_JUNCTION)
+            self.change_state(REVERSING)
     def run_parking(self):
         #complete later
         self.change_state(STOPPED)
         return
+    def run_waiting(self):
+        self.IRSens.update()
+        if self.IRSens.detected():
+            self.change_state(AT_JUNCTION)
     ##Add flashing lights
 if __name__=="__main__":
     robot=Robot()
     robot.run()
             
-            
-
-                
-                
-            
-        
-        
-        
-        
-
-
-
-
-
-
-
-
-
-
