@@ -1,5 +1,5 @@
 from machine import Pin, PWM, ADC, Timer
-from time import ticks_ms, ticks_diff
+from time import ticks_ms, ticks_diff, sleep_ms
 from motor import Motor
 from distance_sensor import ToF
 from hall_sensor import hallSens, NORTH, SOUTH, NONE
@@ -19,7 +19,7 @@ DEBOUNCE = 500 #Debouncing delay for button(ms)
 JUNCTION_LOOPS=10 #Number of times a junction must be detected before it can be acted upon
 CLEAR_LOOPS=10 #Number of times outer sensors must be clear for before a new junction can be detected
 TIMEOUT90=900 #ms for initial, timed segment of 90 degree turn
-TIMEOUT_SPIN=2200 #ms for initial, timed segment of 180 degree turn
+TIMEOUT_SPIN=3500 #ms for initial, timed segment of 180 degree turn
 TIMEOUT_FORWARD=600 # time to move wheels forward onto junction for a turn (ms)
 TIMEOUT_DETECTION=3000 #Time limit for a detection (unused)
 
@@ -43,7 +43,7 @@ STATE_NAMES = ("STOPPED", "IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
                "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING") #Used for debugging print statements
 STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSE, WAIT = range(9) #Possible route actions
 ## Test route
-route=[STRAIGHT, RIGHT, RIGHT, SPIN, RIGHT, RIGHT]
+route=[STRAIGHT, RIGHT, COLLECT]
 
 ## Robot class
 class Robot:
@@ -55,7 +55,8 @@ class Robot:
         self.lineSensFR=Pin(16, Pin.IN, Pin.PULL_DOWN) #FR connection
         self.motorR=Motor(dirPin=4, PWMPin=5)
         self.motorL=Motor(dirPin=7, PWMPin=6)
-        self.motorServoGrab=servoMotor(SERVO_GRAB_CAL_TABLE, 15, 27)
+        self.motorServoGrab=servoMotor(SERVO_GRAB_CAL_TABLE, 15, 27,80)
+        self.motorServoLift=servoMotor(SERVO_GRAB_CAL_TABLE, 13, 27,0)
         self.buttonSS=Pin(17, Pin.IN, Pin.PULL_DOWN)
         self.LEDY=Pin(11, Pin.OUT) #LEDs
         self.LEDR=Pin(10, Pin.OUT) #NEED LEDY=11, LEDR=10 FOR ACTUAL RUN
@@ -330,7 +331,7 @@ class Robot:
                 self.turn_correctionFL=False
                 self.finished_turning=True
         if self.finished_turning: #Once finished turning, moves into the next required state
-            if self.route_step+1>=len(route):
+            if self.route_step>=len(route): ### --------------------------------------- deleted +1 and need to check 
                 self.change_state(STOPPED)
                 return
             action=route[self.route_step]
@@ -365,7 +366,7 @@ class Robot:
             self.motorR.off()
             self.motorL.off()
             self.grabbing=True
-        if self.grabbing and ticks_diff(ticks_ms(), self.state_start+4500)<2000:
+        if self.grabbing and ticks_diff(ticks_ms(), self.state_start+4500)<4500:
             print("closing")
             self.motorServoGrab.close_grabber()
         elif self.grabbing:
@@ -379,6 +380,7 @@ class Robot:
                 print("reversing")
                 self.run_move_backwards()
             else:
+                self.motorServoLift.set_angle(30)
                 self.turn=SPIN
                 self.change_state(TURNING)
     def run_releasing(self):
@@ -401,9 +403,18 @@ class Robot:
         if self.IRSens.detected():
             print("--Detected--")
             self.change_state(FOLLOW_LINE)
+            
+    def test_servo(self):
+        self.motorServoLift.set_angle(60)
+        self.motorServoGrab.set_angle(120)
+        sleep_ms(600)
+        self.motorServoLift.set_angle(0)
+        sleep_ms(600)
+        self.motorServoLift.set_angle(30)
     ##Add flashing lights
 if __name__=="__main__":
     robot=Robot()
+    robot.test_servo()
     robot.run()
             
             
