@@ -48,10 +48,14 @@ N=6
 start_ramp = [STRAIGHT, WAIT, STRAIGHT] #assuming WAIT doesn't include moving forward once green
 ramp_pickup = [LEFT, COLLECT, REVERSE, RIGHT]*N
 pickup_start = [REVERSE] * (N+2)
-start_corner = [LEFT, STRAIGHT, RIGHT] #assume Red
-corner_bay = [RIGHT, DROP] #assume R1 free
-bay_start = [REVERSE, RIGHT, LEFT, STRAIGHT, STRAIGHT]
-upper_left = start_ramp + ramp_pickup + pickup_start + start_corner + corner_bay + bay_start
+start_left_drop = [LEFT, STRAIGHT, RIGHT, LEFT, DROP]
+left_drop_start = [REVERSE, RIGHT, LEFT, STRAIGHT, STRAIGHT]
+start_right_drop = [RIGHT, STRAIGHT, LEFT, RIGHT, DROP]
+right_drop_start = [REVERSE, LEFT, RIGHT, STRAIGHT, STRAIGHT]
+#start_corner = [LEFT, STRAIGHT, RIGHT] #assume Red
+#corner_bay = [RIGHT, DROP] #assume R1 free
+#bay_start = [REVERSE, RIGHT, LEFT, STRAIGHT, STRAIGHT]
+upper_left = start_ramp + ramp_pickup + pickup_start + start_left_drop + left_drop_start + start_right_drop + right_drop_start
 route= upper_left
 
 ## Robot class
@@ -100,6 +104,7 @@ class Robot:
         self.LEDR.value(0)
         self.LEDG.value(0)
         self.which_bay = 0
+        self.which_drop = 0
         
         ## Dictionary to match states to executable functions
         self.handlers = {
@@ -279,11 +284,20 @@ class Robot:
     def run_at_junction(self):
         if self.route_step==len(route):
             self.change_state(STOPPED)
+            
+        #ENSURE WHICH_BAY AND WHICH_DROP CHECKS ARE ONLY COMMITTED ONCE, NOT EVERY CLOCK CYCLE
         elif self.which_bay > 99: #have detected a valid package #just under arbitrary big number
             #action=route[(self.route_step + ((self.which_bay - 100)*3))] #which_bay = 100 + number bay we are on
             self.which_bay = self.which_bay - 100
             del route[6+(self.which_bay*4):(32-self.which_bay)]
             self.which_bay = 0
+        elif self.which_drop != 0:
+            if self.which_drop == 100: #north, red, left
+                del route[-10:] #gets rid of end 10 south statements
+            elif self.which_drop == -100: #south, green, right
+                del route[-20:-10] #gets rid of 10 north statements before south statements
+            self.which_drop = 0
+            #[start:stop], start included, stop excluded
         else:
             action=route[self.route_step]
             self.route_step+=1
@@ -390,9 +404,11 @@ class Robot:
             if self.polarity == NORTH:
                 self.LEDR.value(1)
                 self.which_bay = 100 #arbitrary big number
+                self.which_drop = 100 #positive, north
             elif self.polarity== SOUTH:
                 self.LEDG.value(1)
                 self.which_bay = 100
+                self.which_drop = -100 #negative, south
             elif self.polarity== None:
                 self.which_bay +=1
             if ticks_diff(ticks_ms(), self.state_start+6500)<1000:
