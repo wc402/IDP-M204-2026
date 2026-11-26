@@ -295,50 +295,37 @@ class Robot:
                 self.motorR.Forward(BASESPEED)
             else:
                 self.finished_timed_turn=True
+                
+        #LEFT OR RIGHT TURN, without timers        
         else:
             if ticks_diff(ticks_ms(),self.state_start)<TIMEOUT_FORWARD: #Moves forward until wheels are on the junction
                 self.run_move_straight()
                 return
-            if action==RIGHT: #Performs an initial timed right turn
-                if ticks_diff(ticks_ms(), (self.state_start+TIMEOUT_FORWARD))<TIMEOUT90:
-                    self.motorR.Reverse(BASESPEED)
-                    self.motorL.Forward(BASESPEED)
-                else:
-                    self.finished_timed_turn=True
-            elif action==LEFT: #Performs an initial timed left turn
-                if ticks_diff(ticks_ms(), (self.state_start+TIMEOUT_FORWARD))<TIMEOUT90:
-                    self.motorL.Reverse(BASESPEED)
-                    self.motorR.Forward(BASESPEED)
-                else:
-                    self.finished_timed_turn=True
-        if self.finished_timed_turn and not (self.turn_correctionFR or self.turn_correctionFL or self.finished_turning):
-            if self.lineSensFR.value()==1:
-                self.turn_correctionFR=True
-            elif self.lineSensFL.value()==1:
-                self.turn_correctionFL=True
-            elif self.lineSensML.value()==1 and self.lineSensMR.value()==1:
-                self.finished_turning=True #Middle sensors are on the new line
-            else: #Line not found yet, keep creeping in the turn direction
-                if action in (LEFT, SPIN):
+            if action==RIGHT: #Performs a right turn
+                if self.lineSensFL.value() == 1: # TURNED TOO FAR, correct by turning left
                     self.motorR.Forward(SEARCHSPEED)
                     self.motorL.Reverse(SEARCHSPEED)
-                else:
+                elif self.lineSensML.value() == 1: # TURNED ENOUGH
+                    self.finished_turning = True
+                elif (self.lineSensFR.value() == 1 or self.lineSensMR.value() == 1): #slow search, keep turning
                     self.motorR.Reverse(SEARCHSPEED)
                     self.motorL.Forward(SEARCHSPEED)
-        if self.turn_correctionFR==True:
-            if not (self.lineSensML.value()==1 and self.lineSensMR.value()==1):
-                self.motorR.Reverse(SEARCHSPEED)
-                self.motorL.Forward(SEARCHSPEED)
-            else:
-                self.turn_correctionFR=False
-                self.finished_turning=True
-        elif self.turn_correctionFL==True:
-            if not (self.lineSensML.value()==1 and self.lineSensMR.value()==1):
-                self.motorR.Forward(SEARCHSPEED)
-                self.motorL.Reverse(SEARCHSPEED)
-            else:
-                self.turn_correctionFL=False
-                self.finished_turning=True
+                else: # Initial faster turn
+                    self.motorR.Reverse(BASESPEED)
+                    self.motorL.Forward(BASESPEED)
+            elif action == LEFT: #Performs a left turn
+                if self.lineSensFR.value() == 1: # TURNED TOO FAR, correct by turning right
+                    self.motorL.Forward(SEARCHSPEED)
+                    self.motorR.Reverse(SEARCHSPEED)
+                elif self.lineSensMR.value() == 1: # TURNED ENOUGH
+                    self.finished_turning = True
+                elif (self.lineSensFL.value() == 1 or self.lineSensML.value() == 1): #slow search, keep turning
+                    self.motorL.Reverse(SEARCHSPEED)
+                    self.motorR.Forward(SEARCHSPEED)
+                else: # Initial faster turn when none of sensors on
+                    self.motorL.Reverse(BASESPEED)
+                    self.motorR.Forward(BASESPEED)
+
         if self.finished_turning: #Once finished turning, moves into the next required state
             if self.route_step>=len(route): ### --------------------------------------- deleted +1 and need to check 
                 self.change_state(STOPPED)
