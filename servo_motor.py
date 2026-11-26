@@ -20,7 +20,7 @@ class servoMotor:
         self.max_pulse=2500
         self.set_angle(start_angle)
         self.current = start_angle   # angle currently being commanded
-        self.speed = 5            # degrees per second
+        self.speed = 10            # degrees per second
         self.last_t = ticks_ms()
         #Set a position straight away
     def set_angle(self, angle):
@@ -49,24 +49,24 @@ class servoMotor:
             angle1, adc1=self.table[-1]
             angle= angle0 + ((adc_value - adc0) / (adc1 - adc0)) * (angle1 - angle0)
             return max(self.min_angle, min(self.max_angle, angle))
-    def move_toward(self, target, speed=None):
-    speed = speed or self.speed
-    now = ticks_ms()
-    dt = min(ticks_diff(now, self.last_t), 50) / 1000   # clamp so a long gap doesn't cause a jump
-    self.last_t = now
-    step = speed * dt
-    diff = target - self.current
-    if abs(diff) <= step:
-        self.current = target
-    else:
-        self.current += step if diff > 0 else -step
-    self.set_angle(self.current)
+    def move_toward(self, target, speed):
+        speed = self.speed
+        now = ticks_ms()
+        dt = min(ticks_diff(now, self.last_t), 50) / 1000   # clamp so a long gap doesn't cause a jump
+        self.last_t = now
+        step = speed * dt
+        diff = target - self.current
+        if abs(diff) <= step:
+            self.current = target
+        else:
+            self.current += step if diff > 0 else -step
+        self.set_angle(self.current)
 
-    def close_grabber(self, speed=None):
-    self.move_toward(self.closed_angle, speed)
+    def close_grabber(self, speed=40):
+        self.move_toward(self.closed_angle, speed)
 
     def open_grabber(self, speed=None):
-    self.move_toward(self.open_angle, speed)
+        self.move_toward(self.open_angle, speed)
         
             
         

@@ -7,7 +7,7 @@ from servo_motor import servoMotor
 from IR_sensor import IRSens
 
 ## Calibration constants
-BASESPEED=70 #Initial motor speed (both motors, pwm %)
+BASESPEED=85 #Initial motor speed (both motors, pwm %)
 SEARCHSPEED=50 #Speed for final, untimed turn segement (pwm%)
 STEP=1 #Error multiplication factor for line following control
 MAXSTEER=20 #Maximum additional steering for path correction (pwm%)
@@ -19,9 +19,10 @@ DEBOUNCE = 500 #Debouncing delay for button(ms)
 JUNCTION_LOOPS=10 #Number of times a junction must be detected before it can be acted upon
 CLEAR_LOOPS=10 #Number of times outer sensors must be clear for before a new junction can be detected
 TIMEOUT90=900 #ms for initial, timed segment of 90 degree turn
-TIMEOUT_SPIN=3500 #ms for initial, timed segment of 180 degree turn
+TIMEOUT_SPIN=2000 #ms for initial, timed segment of 180 degree turn
 TIMEOUT_FORWARD=600 # time to move wheels forward onto junction for a turn (ms)
 TIMEOUT_DETECTION=3000 #Time limit for a detection (unused)
+REVERSE_OUT=1000   #ms to reverse after grabbing. Increase until the axle is clear of the walls
 
 SERVO_GRAB_CAL_TABLE = [ #Used to calibrate servo motors
     (0,   5332),
@@ -43,7 +44,8 @@ STATE_NAMES = ("STOPPED", "IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
                "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING") #Used for debugging print statements
 STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSE, WAIT = range(9) #Possible route actions
 ## Test route
-route=[STRAIGHT, RIGHT, COLLECT]
+route=[STRAIGHT, LEFT, COLLECT, RIGHT, STRAIGHT, STRAIGHT, RIGHT]
+##route=[STRAIGHT,LEFT]
 
 ## Robot class
 class Robot:
@@ -61,7 +63,7 @@ class Robot:
         self.LEDY=Pin(11, Pin.OUT) #LEDs
         self.LEDR=Pin(10, Pin.OUT) #NEED LEDY=11, LEDR=10 FOR ACTUAL RUN
         self.LEDG=Pin(12, Pin.OUT)
-        #self.distanceSens=ToF()
+        self.distanceSens=ToF()
         self.hallSens=hallSens(pin=28, threshold_mv=HALL_THRESHOLD)
         self.IRSens=IRSens(ir_pin=14)
         
@@ -309,25 +311,32 @@ class Robot:
                     self.motorR.Forward(BASESPEED)
                 else:
                     self.finished_timed_turn=True
-        if self.finished_timed_turn:
-            if self.lineSensFR.value()==1: #Is the far right sensor on? (case of over/under turn)
+        if self.finished_timed_turn and not (self.turn_correctionFR or self.turn_correctionFL or self.finished_turning):
+            if self.lineSensFR.value()==1:
                 self.turn_correctionFR=True
-            elif self.lineSensFL.value()==1: #Is the far left sensor on? (case of over/under turn)
+            elif self.lineSensFL.value()==1:
                 self.turn_correctionFL=True
-            else:
-                self.finished_turning=True
-        if self.turn_correctionFR==True: #If far right sensor is on, robot slowly turns until the middle left sensor is back on the line 
-            if self.lineSensML.value()==0:
+            elif self.lineSensML.value()==1 and self.lineSensMR.value()==1:
+                self.finished_turning=True #Middle sensors are on the new line
+            else: #Line not found yet, keep creeping in the turn direction
+                if action in (LEFT, SPIN):
+                    self.motorR.Forward(SEARCHSPEED)
+                    self.motorL.Reverse(SEARCHSPEED)
+                else:
+                    self.motorR.Reverse(SEARCHSPEED)
+                    self.motorL.Forward(SEARCHSPEED)
+        if self.turn_correctionFR==True:
+            if not (self.lineSensML.value()==1 and self.lineSensMR.value()==1):
                 self.motorR.Reverse(SEARCHSPEED)
                 self.motorL.Forward(SEARCHSPEED)
-            elif self.lineSensML.value()==1:
+            else:
                 self.turn_correctionFR=False
                 self.finished_turning=True
-        elif self.turn_correctionFL==True: #If far left sensor is on, robot slowly turns until the middle right sensor is back on the line
-            if self.lineSensMR.value()==0: 
+        elif self.turn_correctionFL==True:
+            if not (self.lineSensML.value()==1 and self.lineSensMR.value()==1):
                 self.motorR.Forward(SEARCHSPEED)
                 self.motorL.Reverse(SEARCHSPEED)
-            elif self.lineSensML.value()==1:
+            else:
                 self.turn_correctionFL=False
                 self.finished_turning=True
         if self.finished_turning: #Once finished turning, moves into the next required state
@@ -342,7 +351,7 @@ class Robot:
                 self.change_state(RELEASING)
             elif action==COLLECT: #for testing only
                 self.route_step+=1
-                self.change_state(GRABBING)
+                self.change_state(DETECTING_PACKAGE)
             elif action==PARK:
                 self.route_step+=1
                 self.change_state(PARKING)
@@ -351,12 +360,16 @@ class Robot:
                 self.change_state(WAITING)
     def run_detecting(self):
         #if self.distanceSens.read_distance()<HALL_DISTANCE:
-         #   self.run_move_straight()
+        if (ticks_diff(ticks_ms(), self.state_start)<4500)&(int(self.distanceSens.read_distance())>70):
+            self.run_move_straight()
+            print(self.distanceSens.read_distance())
         #elif self.distanceSens.read_distance()>=HALL_DISTANCE:
-         #   self.motorR.off()
-          #  self.motorL.off()
-           # self.polarity=self.hallSens.package_polarity()
-        self.change_state(GRABBING)
+        else:
+            self.motorR.off()
+            self.motorL.off()
+            self.polarity=self.hallSens.package_polarity()
+        #if self.polarity==NORTH or self.polarity==SOUTH: ------------------------------------------------POLARITY
+            self.change_state(GRABBING)
     def run_grabbing(self):
         #if self.distanceSens.read_distance()<GRAB_DISTANCE:
         if self.grabbing == False and ticks_diff(ticks_ms(), self.state_start)<4500:
@@ -366,26 +379,32 @@ class Robot:
             self.motorR.off()
             self.motorL.off()
             self.grabbing=True
-        if self.grabbing and ticks_diff(ticks_ms(), self.state_start+4500)<4500:
-            print("closing")
-            self.motorServoGrab.close_grabber()
+        if self.grabbing and ticks_diff(ticks_ms(), self.state_start+4500)<3500:
+            self.motorServoGrab.set_angle(0)
+            sleep_ms(400)
+            self.motorServoLift.set_angle(0)
         elif self.grabbing:
             self.polarity=self.hallSens.package_polarity()
             print(self.polarity)
             if self.polarity == NORTH:
                 self.LEDR.value(1)
+                print("NORTH")
             elif self.polarity== SOUTH:
                 self.LEDG.value(1)
-            if ticks_diff(ticks_ms(), self.state_start+6500)<1000:
-                print("reversing")
+                print("SOUTH")
+            if ticks_diff(ticks_ms(), self.state_start+8000)<REVERSE_OUT:
                 self.run_move_backwards()
             else:
+                self.motorR.off()
+                self.motorL.off()
                 self.motorServoLift.set_angle(30)
                 self.turn=SPIN
+                self.route_step+=1
                 self.change_state(TURNING)
     def run_releasing(self):
         if ticks_diff(ticks_ms(), self.state_start)<2000:
             print("opening")
+            self.motorServoLift.set_angle(15)
             self.motorServoGrab.open_grabber()
             self.LEDR.value(0)
             self.LEDG.value(0)
@@ -405,12 +424,16 @@ class Robot:
             self.change_state(FOLLOW_LINE)
             
     def test_servo(self):
-        self.motorServoLift.set_angle(60)
-        self.motorServoGrab.set_angle(120)
-        sleep_ms(600)
         self.motorServoLift.set_angle(0)
+        self.motorServoGrab.set_angle(0)
         sleep_ms(600)
-        self.motorServoLift.set_angle(30)
+        self.motorServoGrab.set_angle(80)
+        self.motorServoLift.set_angle(15)
+        sleep_ms(600)
+        self.motorServoGrab.set_angle(80)
+        self.motorServoLift.set_angle(15)
+
+        ##self.motorServoGrab.close_grabber(10)
     ##Add flashing lights
 if __name__=="__main__":
     robot=Robot()
@@ -418,6 +441,29 @@ if __name__=="__main__":
     robot.run()
             
             
+
+                
+                
+            
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                 
                 
