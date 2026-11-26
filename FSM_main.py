@@ -12,7 +12,8 @@ SEARCHSPEED=50 #Speed for final, untimed turn segement (pwm%)
 STEP=1 #Error multiplication factor for line following control
 MAXSTEER=20 #Maximum additional steering for path correction (pwm%)
 HALL_THRESHOLD=15 #Change in reading required for a magnet to be deemed present(mV, CALIBRATE)
-HALL_DISTANCE=0#Distance at which Hall reading is taken (CALIBRATE)
+HALL_DISTANCE=30 #Distance at which Hall reading is taken to determine the polarity of a package (mm, CALIBRATE)
+PACKAGE_DISTANCE=350 #Distance sensor reading below which a package is determined to be in a bay (mm, CALIBRATE)
 HALL_SETTLE=100 #time delay before taking a hall sensor reading)(ms)
 GRAB_DISTANCE =50#Distance at which grabber is engaged (CALIBRATE)
 DEBOUNCE = 500 #Debouncing delay for button(ms)
@@ -358,42 +359,41 @@ class Robot:
                 self.route_step+=1
                 self.change_state(WAITING)
     def run_detecting(self):
-        #if self.distanceSens.read_distance()<HALL_DISTANCE:
-        if (ticks_diff(ticks_ms(), self.state_start)<4500)&(int(self.distanceSens.read_distance())>70):
+        if (ticks_diff(ticks_ms(), self.state_start)<1000): #Moves forward into the bay to allow a reliable ToF reading
             self.run_move_straight()
-            print(self.distanceSens.read_distance())
-        #elif self.distanceSens.read_distance()>=HALL_DISTANCE:
         else:
             self.motorR.off()
             self.motorL.off()
-            self.polarity=self.hallSens.package_polarity()
-        #if self.polarity==NORTH or self.polarity==SOUTH: ------------------------------------------------POLARITY
-            self.change_state(GRABBING)
+            distance=self.distanceSens.read_distance()
+            if (distance < PACKAGE_DISTANCE) and (distance > HALL_DISTANCE): #If a package is present, moves forward to allow a hall sensor reading
+                self.run_move_straight()
+            elif (distance < PACKAGE_DISTANCE) and (distance <HALL_DISTANCE): #Takes hall sensor reading at appropriate distance if package present
+                self.motorR.off()
+                self.motorL.off()
+                self.polarity=self.hallSens.package_polarity()
+            else distance > PACKAGE_DISTANCE: #Reverses out of bay if no package present
+                self.route_step +=1 #Assumes next route step hard coded into route, will depend on navigation implementation
+                self.change_state(REVERSING) #Will need to reverse regardless of navigation decisions
+            if self.polarity is not None: #Package is magnetic so need to grab it
+                self.change_state(GRABBING)
+            else: #Package is a dummy, see same reasoning as above
+                self.route_step+=1
+                self.change_state(REVERSING)
     def run_grabbing(self):
-        #if self.distanceSens.read_distance()<GRAB_DISTANCE:
-        if self.grabbing == False and ticks_diff(ticks_ms(), self.state_start)<4500:
-            self.run_move_straight()
-        #elif self.distanceSens.read_distance()>=GRAB_DISTANCE:
-        elif self.grabbing == False:
-            self.motorR.off()
-            self.motorL.off()
-            self.grabbing=True
-        if self.grabbing and ticks_diff(ticks_ms(), self.state_start+4500)<3500:
+        #Robot should already be stationary and at the grab distance (can/should be the same as the hall sensor reading distance)
+        if ticks_diff(ticks_ms(), self.state_start)<2000:
             self.motorServoGrab.set_angle(0)
-            sleep_ms(400)
+        if ticks_diff(ticks_ms(), self.state_start+2000)<2000:
             self.motorServoLift.set_angle(0)
-        elif self.grabbing:
-            self.polarity=self.hallSens.package_polarity()
-            print(self.polarity)
-            if self.polarity == NORTH:
-                self.LEDR.value(1)
-                print("NORTH")
-            elif self.polarity== SOUTH:
-                self.LEDG.value(1)
-                print("SOUTH")
-            self.motorR.off()
-            self.motorL.off()
+        if self.polarity == NORTH:
+            self.LEDR.value(1)
+            print("NORTH")
+        elif self.polarity== SOUTH:
+            self.LEDG.value(1)
+             print("SOUTH")
+        if ticks_diff(ticks_ms(), self.state_start+4000)<2000:
             self.motorServoLift.set_angle(30)
+        else:
             self.route_step+=1
             self.change_state(REVERSING)
  
