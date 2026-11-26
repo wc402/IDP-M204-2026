@@ -42,8 +42,17 @@ SERVO_GRAB_CAL_TABLE = [ #Used to calibrate servo motors
 STATE_NAMES = ("STOPPED", "IDLE", "FOLLOW_LINE", "AT_JUNCTION", "REVERSING",
                "TURNING", "DETECTING_PACKAGE", "GRABBING", "RELEASING", "PARKING") #Used for debugging print statements
 STRAIGHT, LEFT, RIGHT, SPIN, COLLECT, DROP, PARK, REVERSE, WAIT = range(9) #Possible route actions
+
 ## Test route
-route=[STRAIGHT, RIGHT, COLLECT]
+N=6
+start_ramp = [STRAIGHT, WAIT, STRAIGHT] #assuming WAIT doesn't include moving forward once green
+ramp_pickup = [LEFT, COLLECT, REVERSE, RIGHT]*N
+pickup_start = [REVERSE] * (N+2)
+start_corner = [LEFT, STRAIGHT, RIGHT] #assume Red
+corner_bay = [RIGHT, DROP] #assume R1 free
+bay_start = [REVERSE, RIGHT, LEFT, STRAIGHT, STRAIGHT]
+upper_left = start_ramp + ramp_pickup + pickup_start + start_corner + corner_bay + bay_start
+route= upper_left
 
 ## Robot class
 class Robot:
