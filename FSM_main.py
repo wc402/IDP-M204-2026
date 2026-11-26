@@ -85,7 +85,7 @@ class Robot:
         self.yellowOn=False
         self.lastprint=0
         self.finished_turning=False
-        self.finished_timed_turn=False
+        #self.finished_timed_turn=False
         self.turn_correctionFR=False
         self.turn_correctionFL=False
         self.grabbing=False
@@ -164,7 +164,7 @@ class Robot:
             self.junction_count=0
             self.clear_count=0
             self.finished_turning=False
-            self.finished_timed_turn=False
+            #self.finished_timed_turn=False
             self.turn_correctionFR=False
             self.turn_correctionFL=False
         elif new_state== GRABBING:
@@ -289,13 +289,23 @@ class Robot:
         # Exectuted to perform turns
     def run_turning(self):
         action=self.turn
-        if action==SPIN: #Performs 180 degree turn without moving forward first
+        #180 degree LEFT TURN
+        if action==SPIN: #Performs turn without moving forward first
             if ticks_diff(ticks_ms(), self.state_start)<TIMEOUT_SPIN:
                 self.motorL.Reverse(BASESPEED)
                 self.motorR.Forward(BASESPEED)
-            else:
-                self.finished_timed_turn=True
-                
+                return
+            if self.lineSensFR.value() == 1: # TURNED TOO FAR, correct by turning right
+                self.motorL.Forward(SEARCHSPEED)
+                self.motorR.Reverse(SEARCHSPEED)
+            elif self.lineSensMR.value() == 1: # TURNED ENOUGH
+                self.finished_turning = True
+            elif (self.lineSensFL.value() == 1 or self.lineSensML.value() == 1): #slow search, keep turning
+                self.motorL.Reverse(SEARCHSPEED)
+                self.motorR.Forward(SEARCHSPEED)
+            else: # all sensors off after turning... concerning
+                self.motorL.Reverse(SEARCHSPEED)
+                self.motorR.Forward(SEARCGSPEED) 
         #LEFT OR RIGHT TURN, without timers        
         else:
             if ticks_diff(ticks_ms(),self.state_start)<TIMEOUT_FORWARD: #Moves forward until wheels are on the junction
@@ -325,7 +335,7 @@ class Robot:
                 else: # Initial faster turn when none of sensors on
                     self.motorL.Reverse(BASESPEED)
                     self.motorR.Forward(BASESPEED)
-
+        #FINISHED TURNING
         if self.finished_turning: #Once finished turning, moves into the next required state
             if self.route_step>=len(route): ### --------------------------------------- deleted +1 and need to check 
                 self.change_state(STOPPED)
