@@ -99,6 +99,7 @@ class Robot:
         self.LEDY.value(0)
         self.LEDR.value(0)
         self.LEDG.value(0)
+        self.which_bay = 0
         
         ## Dictionary to match states to executable functions
         self.handlers = {
@@ -278,6 +279,11 @@ class Robot:
     def run_at_junction(self):
         if self.route_step==len(route):
             self.change_state(STOPPED)
+        elif self.which_bay > 99: #have detected a valid package #just under arbitrary big number
+            #action=route[(self.route_step + ((self.which_bay - 100)*3))] #which_bay = 100 + number bay we are on
+            self.which_bay = self.which_bay - 100
+            del route[6+(self.which_bay*4):(32-self.which_bay)]
+            self.which_bay = 0
         else:
             action=route[self.route_step]
             self.route_step+=1
@@ -366,7 +372,7 @@ class Robot:
           #  self.motorL.off()
            # self.polarity=self.hallSens.package_polarity()
         self.change_state(GRABBING)
-    def run_grabbing(self):
+    def run_grabbing(self): #check if elif statements for GRAB_DISTANCE? Include the check for polarity != None before pickup
         #if self.distanceSens.read_distance()<GRAB_DISTANCE:
         if self.grabbing == False and ticks_diff(ticks_ms(), self.state_start)<4500:
             self.run_move_straight()
@@ -383,8 +389,12 @@ class Robot:
             print(self.polarity)
             if self.polarity == NORTH:
                 self.LEDR.value(1)
+                self.which_bay = 100 #arbitrary big number
             elif self.polarity== SOUTH:
                 self.LEDG.value(1)
+                self.which_bay = 100
+            elif self.polarity== None:
+                self.which_bay +=1
             if ticks_diff(ticks_ms(), self.state_start+6500)<1000:
                 print("reversing")
                 self.run_move_backwards()
