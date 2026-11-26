@@ -22,7 +22,6 @@ TIMEOUT90=900 #ms for initial, timed segment of 90 degree turn
 TIMEOUT_SPIN=2000 #ms for initial, timed segment of 180 degree turn
 TIMEOUT_FORWARD=600 # time to move wheels forward onto junction for a turn (ms)
 TIMEOUT_DETECTION=3000 #Time limit for a detection (unused)
-REVERSE_OUT=1000   #ms to reverse after grabbing. Increase until the axle is clear of the walls
 
 SERVO_GRAB_CAL_TABLE = [ #Used to calibrate servo motors
     (0,   5332),
@@ -392,15 +391,12 @@ class Robot:
             elif self.polarity== SOUTH:
                 self.LEDG.value(1)
                 print("SOUTH")
-            if ticks_diff(ticks_ms(), self.state_start+8000)<REVERSE_OUT:
-                self.run_move_backwards()
-            else:
-                self.motorR.off()
-                self.motorL.off()
-                self.motorServoLift.set_angle(30)
-                self.turn=SPIN
-                self.route_step+=1
-                self.change_state(TURNING)
+            self.motorR.off()
+            self.motorL.off()
+            self.motorServoLift.set_angle(30)
+            self.route_step+=1
+            self.change_state(REVERSING)
+ 
     def run_releasing(self):
         if ticks_diff(ticks_ms(), self.state_start)<2000:
             print("opening")
