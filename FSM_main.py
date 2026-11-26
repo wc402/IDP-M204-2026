@@ -12,7 +12,7 @@ SEARCHSPEED=50 #Speed for final, untimed turn segement (pwm%)
 STEP=1 #Error multiplication factor for line following control
 MAXSTEER=20 #Maximum additional steering for path correction (pwm%)
 HALL_THRESHOLD=15 #Change in reading required for a magnet to be deemed present(mV, CALIBRATE)
-HALL_DISTANCE=0#Distance at which Hall reading is taken (CALIBRATE)
+HALL_DISTANCE=150 #Distance at which Hall reading is taken (mm, CALIBRATE)
 HALL_SETTLE=100 #time delay before taking a hall sensor reading)(ms)
 GRAB_DISTANCE =50#Distance at which grabber is engaged (CALIBRATE)
 DEBOUNCE = 500 #Debouncing delay for button(ms)
@@ -56,8 +56,8 @@ right_drop_start = [REVERSE, LEFT, RIGHT, STRAIGHT, STRAIGHT]
 #corner_bay = [RIGHT, DROP] #assume R1 free
 #bay_start = [REVERSE, RIGHT, LEFT, STRAIGHT, STRAIGHT]
 upper_left = start_ramp + ramp_pickup + pickup_start + start_left_drop + left_drop_start + start_right_drop + right_drop_start
-route= upper_left
-
+#route= upper_left
+route = [STRAIGHT, WAIT, LEFT, COLLECT, REVERSE, RIGHT, REVERSE, REVERSE, REVERSE]
 ## Robot class
 class Robot:
     def __init__(self):
@@ -68,7 +68,7 @@ class Robot:
         self.lineSensFR=Pin(16, Pin.IN, Pin.PULL_DOWN) #FR connection
         self.motorR=Motor(dirPin=4, PWMPin=5)
         self.motorL=Motor(dirPin=7, PWMPin=6)
-        self.motorServoGrab=servoMotor(SERVO_GRAB_CAL_TABLE, 15, 27,80)
+        self.motorServoGrab=servoMotor(SERVO_GRAB_CAL_TABLE, 15, 27,30)
         self.motorServoLift=servoMotor(SERVO_GRAB_CAL_TABLE, 13, 27,0)
         self.buttonSS=Pin(17, Pin.IN, Pin.PULL_DOWN)
         self.LEDY=Pin(11, Pin.OUT) #LEDs
@@ -286,17 +286,17 @@ class Robot:
             self.change_state(STOPPED)
             
         #ENSURE WHICH_BAY AND WHICH_DROP CHECKS ARE ONLY COMMITTED ONCE, NOT EVERY CLOCK CYCLE
-        elif self.which_bay > 99: #have detected a valid package #just under arbitrary big number
+        #elif self.which_bay > 99: #have detected a valid package #just under arbitrary big number
             #action=route[(self.route_step + ((self.which_bay - 100)*3))] #which_bay = 100 + number bay we are on
-            self.which_bay = self.which_bay - 100
-            del route[6+(self.which_bay*4):(32-self.which_bay)]
-            self.which_bay = 0
-        elif self.which_drop != 0:
-            if self.which_drop == 100: #north, red, left
-                del route[-10:] #gets rid of end 10 south statements
-            elif self.which_drop == -100: #south, green, right
-                del route[-20:-10] #gets rid of 10 north statements before south statements
-            self.which_drop = 0
+         #   self.which_bay = self.which_bay - 100
+          #  del route[6+(self.which_bay*4):(32-self.which_bay)]
+           # self.which_bay = 0
+        #elif self.which_drop != 0:
+        #    if self.which_drop == 100: #north, red, left
+        #        del route[-10:] #gets rid of end 10 south statements
+        #    elif self.which_drop == -100: #south, green, right
+        #        del route[-20:-10] #gets rid of 10 north statements before south statements
+        #    self.which_drop = 0
             #[start:stop], start included, stop excluded
         else:
             action=route[self.route_step]
@@ -380,22 +380,29 @@ class Robot:
                 self.change_state(WAITING)
     def run_detecting(self):
         #if self.distanceSens.read_distance()<HALL_DISTANCE:
-         #   self.run_move_straight()
+        if ticks_diff(ticks_ms(), self.state_start)<4500:
+            self.run_move_straight()
         #elif self.distanceSens.read_distance()>=HALL_DISTANCE:
-         #   self.motorR.off()
-          #  self.motorL.off()
-           # self.polarity=self.hallSens.package_polarity()
-        self.change_state(GRABBING)
+        else:
+            self.motorR.off()
+            self.motorL.off()
+            self.polarity=self.hallSens.package_polarity()
+        if self.polarity == NORTH or self.polarity == SOUTH:
+            self.change_state(GRABBING)
+        else:
+            self.route_step+=1
+        self.change_state(REVERSE)
+        
     def run_grabbing(self): #check if elif statements for GRAB_DISTANCE? Include the check for polarity != None before pickup
         #if self.distanceSens.read_distance()<GRAB_DISTANCE:
-        if self.grabbing == False and ticks_diff(ticks_ms(), self.state_start)<4500:
-            self.run_move_straight()
+        #if self.grabbing == False and ticks_diff(ticks_ms(), self.state_start)<1500:
+         #   self.run_move_straight()
         #elif self.distanceSens.read_distance()>=GRAB_DISTANCE:
-        elif self.grabbing == False:
+        if self.grabbing == False:
             self.motorR.off()
             self.motorL.off()
             self.grabbing=True
-        if self.grabbing and ticks_diff(ticks_ms(), self.state_start+4500)<4500:
+        if self.grabbing and ticks_diff(ticks_ms(), self.state_start)<2000:
             print("closing")
             self.motorServoGrab.close_grabber()
         elif self.grabbing:
@@ -403,15 +410,15 @@ class Robot:
             print(self.polarity)
             if self.polarity == NORTH:
                 self.LEDR.value(1)
-                self.which_bay = 100 #arbitrary big number
-                self.which_drop = 100 #positive, north
+                #self.which_bay = 100 #arbitrary big number
+                #self.which_drop = 100 #positive, north
             elif self.polarity== SOUTH:
                 self.LEDG.value(1)
-                self.which_bay = 100
-                self.which_drop = -100 #negative, south
-            elif self.polarity== None:
-                self.which_bay +=1
-            if ticks_diff(ticks_ms(), self.state_start+6500)<1000:
+                #self.which_bay = 100
+                #self.which_drop = -100 #negative, south
+            #elif self.polarity== None:
+                #self.which_bay +=1
+            if ticks_diff(ticks_ms(), self.state_start+2000)<1000:
                 print("reversing")
                 self.run_move_backwards()
             else:
@@ -437,15 +444,16 @@ class Robot:
         self.IRSens.update()
         if self.IRSens.detected():
             print("--Detected--")
-            self.change_state(FOLLOW_LINE)
+            self.route_step+=1
+            self.change_state(STRAIGHT)
             
     def test_servo(self):
-        self.motorServoLift.set_angle(60)
-        self.motorServoGrab.set_angle(120)
+        self.motorServoLift.set_angle(0)
+        self.motorServoGrab.set_angle(0)
         sleep_ms(600)
         self.motorServoLift.set_angle(0)
         sleep_ms(600)
-        self.motorServoLift.set_angle(30)
+        self.motorServoLift.set_angle(0)
     ##Add flashing lights
 if __name__=="__main__":
     robot=Robot()
