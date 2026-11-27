@@ -58,7 +58,7 @@ right_drop_start = [REVERSE, LEFT, RIGHT, STRAIGHT, STRAIGHT]
 #bay_start = [REVERSE, RIGHT, LEFT, STRAIGHT, STRAIGHT]
 upper_left = start_ramp + ramp_pickup + pickup_start + start_left_drop + left_drop_start + start_right_drop + right_drop_start
 #route= upper_left
-route = [STRAIGHT, WAIT, LEFT, COLLECT, REVERSE, RIGHT, REVERSE, REVERSE, REVERSE]
+route = [STRAIGHT, RIGHT, COLLECT, RIGHT, STRAIGHT]
 ## Robot class
 class Robot:
     def __init__(self):
@@ -69,8 +69,8 @@ class Robot:
         self.lineSensFR=Pin(16, Pin.IN, Pin.PULL_DOWN) #FR connection
         self.motorR=Motor(dirPin=4, PWMPin=5)
         self.motorL=Motor(dirPin=7, PWMPin=6)
-        self.motorServoGrab=servoMotor(SERVO_GRAB_CAL_TABLE, 15, 27,30)
-        self.motorServoLift=servoMotor(SERVO_GRAB_CAL_TABLE, 13, 27,0)
+        self.motorServoGrab=servoMotor(SERVO_GRAB_CAL_TABLE, 15, 27,0)
+        self.motorServoLift=servoMotor(SERVO_GRAB_CAL_TABLE, 13, 27,80)
         self.buttonSS=Pin(17, Pin.IN, Pin.PULL_DOWN)
         self.LEDY=Pin(11, Pin.OUT) #LEDs
         self.LEDR=Pin(10, Pin.OUT) #NEED LEDY=11, LEDR=10 FOR ACTUAL RUN
@@ -145,7 +145,7 @@ class Robot:
     def change_state(self, new_state):
         self.state=new_state
         self.state_start=ticks_ms()
-        #print("Now " + STATE_NAMES[new_state])
+        print("Now " + STATE_NAMES[new_state])
         if self.state == WAITING:        # leaving WAITING
             self.IRSens.close()
         if new_state==STOPPED:
@@ -392,7 +392,7 @@ class Robot:
                 self.motorR.off()
                 self.motorL.off()
                 self.polarity=self.hallSens.package_polarity()
-            else distance > PACKAGE_DISTANCE: #Reverses out of bay if no package present
+            elif distance > PACKAGE_DISTANCE: #Reverses out of bay if no package present
                 self.route_step +=1 #Assumes next route step hard coded into route, will depend on navigation implementation
                 self.change_state(REVERSING) #Will need to reverse regardless of navigation decisions
             if self.polarity is not None: #Package is magnetic so need to grab it
@@ -411,7 +411,7 @@ class Robot:
             print("NORTH")
         elif self.polarity== SOUTH:
             self.LEDG.value(1)
-             print("SOUTH")
+            print("SOUTH")
         if ticks_diff(ticks_ms(), self.state_start+4000)<2000:
             self.motorServoLift.set_angle(30)
         else:
@@ -446,7 +446,7 @@ class Robot:
         sleep_ms(600)
         self.motorServoLift.set_angle(0)
         sleep_ms(600)
-        self.motorServoLift.set_angle(0)
+        self.motorServoGrab.set_angle(80)
     ##Add flashing lights
 if __name__=="__main__":
     robot=Robot()
