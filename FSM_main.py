@@ -9,11 +9,13 @@ from IR_sensor import IRSens
 ## Calibration constants
 BASESPEED=70 #Initial motor speed (both motors, pwm %)
 SEARCHSPEED=50 #Speed for final, untimed turn segement (pwm%)
-STEP=1 #Error multiplication factor for line following control
+REVERSESPEED=60
+STEP_F=1 #Error multiplication factor for line following control (moving forwards)
+STEP_R=1 #Error multiplication factor for line following control (moving backwards)
 MAXSTEER=20 #Maximum additional steering for path correction (pwm%)
 HALL_THRESHOLD=15 #Change in reading required for a magnet to be deemed present(mV, CALIBRATE)
-HALL_DISTANCE=30 #Distance at which Hall reading is taken to determine the polarity of a package (mm, CALIBRATE)
-PACKAGE_DISTANCE=350 #Distance sensor reading below which a package is determined to be in a bay (mm, CALIBRATE)
+HALL_DISTANCE=60 #Distance at which Hall reading is taken to determine the polarity of a package (mm, CALIBRATE)
+PACKAGE_DISTANCE=450 #Distance sensor reading below which a package is determined to be in a bay (mm, CALIBRATE)
 HALL_SETTLE=100 #time delay before taking a hall sensor reading)(ms)
 GRAB_DISTANCE =50#Distance at which grabber is engaged (CALIBRATE)
 DEBOUNCE = 500 #Debouncing delay for button(ms)
@@ -58,7 +60,7 @@ right_drop_start = [REVERSE, LEFT, RIGHT, STRAIGHT, STRAIGHT]
 #bay_start = [REVERSE, RIGHT, LEFT, STRAIGHT, STRAIGHT]
 upper_left = start_ramp + ramp_pickup + pickup_start + start_left_drop + left_drop_start + start_right_drop + right_drop_start
 #route= upper_left
-route = [STRAIGHT, RIGHT, COLLECT, RIGHT, STRAIGHT]
+route = [REVERSE, REVERSE, REVERSE, REVERSE]
 ## Robot class
 class Robot:
     def __init__(self):
@@ -70,12 +72,12 @@ class Robot:
         self.motorR=Motor(dirPin=4, PWMPin=5)
         self.motorL=Motor(dirPin=7, PWMPin=6)
         self.motorServoGrab=servoMotor(SERVO_GRAB_CAL_TABLE, 15, 27,0)
-        self.motorServoLift=servoMotor(SERVO_GRAB_CAL_TABLE, 13, 27,80)
+        self.motorServoLift=servoMotor(SERVO_GRAB_CAL_TABLE, 13, 27,90)
         self.buttonSS=Pin(17, Pin.IN, Pin.PULL_DOWN)
         self.LEDY=Pin(11, Pin.OUT) #LEDs
         self.LEDR=Pin(10, Pin.OUT) #NEED LEDY=11, LEDR=10 FOR ACTUAL RUN
         self.LEDG=Pin(12, Pin.OUT)
-        #self.distanceSens=ToF()
+        self.distanceSens=ToF()
         self.hallSens=hallSens(pin=28, threshold_mv=HALL_THRESHOLD)
         self.IRSens=IRSens(ir_pin=14)
         
@@ -181,6 +183,11 @@ class Robot:
             self.finished_timed_turn=False
             self.turn_correctionFR=False
             self.turn_correctionFL=False
+        if new_state==REVERSING:
+            self.steer=0
+            self.last_error=0
+            self.junction_count=0
+            self.clear_count=0
         elif new_state== GRABBING:
             self.grabbing=False
         elif new_state==RELEASING:
@@ -215,9 +222,9 @@ class Robot:
         error= self.lineSensML.value()-self.lineSensMR.value()
         if error !=0: #Robot off centre but still detecting line (only one sensor on). Correction grows with each step
             self.last_error=error
-            self.steer-=error*STEP
+            self.steer-=error*STEP_F
         elif self.lineSensML.value()==0 and self.lineSensMR.value()==0: #Line lost (both sensors off)
-            self.steer+=self.last_error*STEP #Keep turn in the opposite direction as when a line last detected
+            self.steer+=self.last_error*STEP_F #Keep turn in the opposite direction as when a line last detected
         else: #Following line correctly, do nothing
             self.steer = 0
         if self.act:  
@@ -240,9 +247,9 @@ class Robot:
         error= self.lineSensML.value()-self.lineSensMR.value()
         if error !=0: #Robot off centre but still detecting line (only one sensor on). Correction grows with each step
             self.last_error=error
-            self.steer-=error*STEP
+            self.steer-=error*STEP_F
         elif self.lineSensML.value()==0 and self.lineSensMR.value()==0: #Line lost (both sensors off)
-            self.steer+=self.last_error*STEP #Keep turn in the opposite direction as when a line last detected
+            self.steer+=self.last_error*STEP_F #Keep turn in the opposite direction as when a line last detected_
         else: #Following line correctly, do nothing
             self.steer = 0
         self.steer=max(-MAXSTEER, min(MAXSTEER, self.steer))
@@ -252,8 +259,8 @@ class Robot:
     def run_reversing(self):
         error=self.lineSensML.value()-self.lineSensMR.value()
         if error !=0:
-            self.lastError=error
-            self.steer-=error*STEP
+            self.last_error=error
+            self.steer-=error*STEP_R
         else:
             self.steer=0
         if self.act:  
@@ -269,19 +276,19 @@ class Robot:
             if self.clear_count>=CLEAR_LOOPS:
                 self.act=True
         self.steer=max(-MAXSTEER, min(MAXSTEER, self.steer))
-        self.motorR.Reverse(BASESPEED+self.steer)
-        self.motorL.Reverse(BASESPEED-self.steer)
+        self.motorR.Reverse(REVERSESPEED+self.steer)
+        self.motorL.Reverse(REVERSESPEED-self.steer)
     #Reversing without junction detection
     def run_move_backwards(self):
         error=self.lineSensML.value()-self.lineSensMR.value()
         if error !=0:
-            self.lastError=error
-            self.steer-=error*STEP
+            self.last_error=error
+            self.steer-=error*STEP_R
         else:
             self.steer=0
         self.steer=max(-MAXSTEER, min(MAXSTEER, self.steer))
-        self.motorR.Reverse(BASESPEED+self.steer)
-        self.motorL.Reverse(BASESPEED-self.steer)
+        self.motorR.Reverse(REVERSESPEED+self.steer)
+        self.motorL.Reverse(REVERSESPEED-self.steer)
     def run_at_junction(self):
         if self.route_step==len(route):
             self.change_state(STOPPED)
@@ -312,6 +319,8 @@ class Robot:
                 self.change_state(DETECTING_PACKAGE)
             elif action== PARK:
                 self.change_state(PARKING)
+            elif action == REVERSE:
+                self.change_state(REVERSING)
             elif action == WAIT:
                 self.change_state(WAITING)
         # Exectuted to perform turns
@@ -328,6 +337,7 @@ class Robot:
                 self.run_move_straight()
                 return
             if action==RIGHT: #Performs an initial timed right turn
+                print("timed turn right")
                 if ticks_diff(ticks_ms(), (self.state_start+TIMEOUT_FORWARD))<TIMEOUT90:
                     self.motorR.Reverse(BASESPEED)
                     self.motorL.Forward(BASESPEED)
@@ -340,13 +350,15 @@ class Robot:
                 else:
                     self.finished_timed_turn=True
         if self.finished_timed_turn:
+            print("finished timed turn")
             if self.lineSensFR.value()==1: #Is the far right sensor on? (case of over/under turn)
                 self.turn_correctionFR=True
             elif self.lineSensFL.value()==1: #Is the far left sensor on? (case of over/under turn)
                 self.turn_correctionFL=True
             else:
                 self.finished_turning=True
-        if self.turn_correctionFR==True: #If far right sensor is on, robot slowly turns until the middle left sensor is back on the line 
+        if self.turn_correctionFR==True: #If far right sensor is on, robot slowly turns until the middle left sensor is back on the line
+            print("correcting right")
             if self.lineSensML.value()==0:
                 self.motorR.Reverse(SEARCHSPEED)
                 self.motorL.Forward(SEARCHSPEED)
@@ -354,6 +366,7 @@ class Robot:
                 self.turn_correctionFR=False
                 self.finished_turning=True
         elif self.turn_correctionFL==True: #If far left sensor is on, robot slowly turns until the middle right sensor is back on the line
+            print("correcting left")
             if self.lineSensMR.value()==0: 
                 self.motorR.Forward(SEARCHSPEED)
                 self.motorL.Reverse(SEARCHSPEED)
@@ -361,7 +374,8 @@ class Robot:
                 self.turn_correctionFL=False
                 self.finished_turning=True
         if self.finished_turning: #Once finished turning, moves into the next required state
-            if self.route_step>=len(route): ### --------------------------------------- deleted +1 and need to check 
+            print("finished turning")
+            if self.route_>=len(route): ### --------------------------------------- deleted +1 and need to check 
                 self.change_state(STOPPED)
                 return
             action=route[self.route_step]
@@ -372,7 +386,7 @@ class Robot:
                 self.change_state(RELEASING)
             elif action==COLLECT: #for testing only
                 self.route_step+=1
-                self.change_state(GRABBING)
+                self.change_state(DETECTING_PACKAGE)
             elif action==PARK:
                 self.route_step+=1
                 self.change_state(PARKING)
@@ -380,24 +394,32 @@ class Robot:
                 self.route_step+=1
                 self.change_state(WAITING)
     def run_detecting(self):
+        hall_taken=False
         if (ticks_diff(ticks_ms(), self.state_start)<1000): #Moves forward into the bay to allow a reliable ToF reading
             self.run_move_straight()
         else:
-            self.motorR.off()
-            self.motorL.off()
             distance=self.distanceSens.read_distance()
-            if (distance < PACKAGE_DISTANCE) and (distance > HALL_DISTANCE): #If a package is present, moves forward to allow a hall sensor reading
+            if (distance <= PACKAGE_DISTANCE) and (distance >= HALL_DISTANCE): #If a package is present, moves forward to allow a hall sensor reading
                 self.run_move_straight()
-            elif (distance < PACKAGE_DISTANCE) and (distance <HALL_DISTANCE): #Takes hall sensor reading at appropriate distance if package present
+                print("moving for hall sens")
+            elif (distance <= PACKAGE_DISTANCE) and (distance <HALL_DISTANCE): #Takes hall sensor reading at appropriate distance if package present
                 self.motorR.off()
                 self.motorL.off()
+                if ticks_diff(ticks_ms(), self.state_start+1000)<HALL_SETTLE:
+                    print("hall settle")
+                    pass
                 self.polarity=self.hallSens.package_polarity()
+                print(self.polarity)
+                hall_taken=True
             elif distance > PACKAGE_DISTANCE: #Reverses out of bay if no package present
                 self.route_step +=1 #Assumes next route step hard coded into route, will depend on navigation implementation
+                print("no package detected")
                 self.change_state(REVERSING) #Will need to reverse regardless of navigation decisions
-            if self.polarity is not None: #Package is magnetic so need to grab it
+            if hall_taken and self.polarity is not NONE: #Package is magnetic so need to grab it
+                print("grabbing")
                 self.change_state(GRABBING)
-            else: #Package is a dummy, see same reasoning as above
+            elif hall_taken: #Package is a dummy, see same reasoning as above
+                print("dummy detected")
                 self.route_step+=1
                 self.change_state(REVERSING)
     def run_grabbing(self):
@@ -444,9 +466,7 @@ class Robot:
         self.motorServoLift.set_angle(0)
         self.motorServoGrab.set_angle(0)
         sleep_ms(600)
-        self.motorServoLift.set_angle(0)
-        sleep_ms(600)
-        self.motorServoGrab.set_angle(80)
+        self.motorServoGrab.set_angle(90)
     ##Add flashing lights
 if __name__=="__main__":
     robot=Robot()
@@ -462,6 +482,9 @@ if __name__=="__main__":
         
         
         
+
+
+
 
 
 
